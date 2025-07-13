@@ -1,0 +1,3 @@
+.env
+agentic-infra-manager/config/agent.yaml
+agentic-infra-manager/.env

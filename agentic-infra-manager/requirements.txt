@@ -1,0 +1,66 @@
+# Core AI and LangGraph
+langgraph>=0.0.40
+langchain>=0.1.0
+langchain-openai>=0.0.8
+langchain-community>=0.0.20
+
+# AWS SDK and Infrastructure
+boto3>=1.34.0
+botocore>=1.34.0
+aws-cdk-lib>=2.100.0
+cdktf>=0.19.0
+constructs>=10.3.0
+
+# Kubernetes and Container Management
+kubernetes>=28.1.0
+docker>=6.1.0
+
+# Infrastructure as Code
+python-terraform>=0.10.1
+
+# Git and Repository Analysis
+GitPython>=3.1.40
+pygithub>=2.1.0
+requests>=2.31.0
+
+# Visualization and Diagrams
+diagrams>=0.23.4
+matplotlib>=3.8.0
+networkx>=3.2.1
+graphviz>=0.20.1
+pillow>=10.1.0
+
+# Security and Compliance
+bandit>=1.7.5
+safety>=3.0.0
+checkov>=3.0.0
+
+# Data Processing and Analysis
+pandas>=2.1.0
+numpy>=1.25.0
+pyyaml>=6.0.1
+jinja2>=3.1.2
+
+# Monitoring and Observability
+prometheus-client>=0.19.0
+opencensus>=0.11.4
+
+# Testing and Quality
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+black>=23.9.0
+flake8>=6.1.0
+mypy>=1.6.0
+
+# Web Framework for API
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.4.0
+
+# Utilities
+click>=8.1.0
+rich>=13.6.0
+typer>=0.9.0
+asyncio-compat>=0.1.2
+aiofiles>=23.2.1 

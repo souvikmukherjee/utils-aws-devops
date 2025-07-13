@@ -1,0 +1,715 @@
+"""
+Core Infrastructure Agent implementation using LangGraph.
+
+This module implements the main InfrastructureAgent class that orchestrates
+the entire infrastructure planning, provisioning, and management workflow.
+"""
+
+import asyncio
+import logging
+from typing import Dict, Any, Optional, List
+from datetime import datetime
+
+from langgraph.graph import StateGraph, END
+from langchain_openai import ChatOpenAI
+from langchain.schema import BaseMessage, HumanMessage, SystemMessage
+
+from .config import AgentConfig, load_config
+from .state import (
+    AgentState, 
+    DeploymentPhase, 
+    create_initial_state,
+    update_state_phase,
+    add_error,
+    update_progress
+)
+
+
+class InfrastructureAgent:
+    """
+    Main Infrastructure Agent that autonomously plans, provisions, and manages AWS infrastructure.
+    
+    This agent uses LangGraph to model complex decision-making processes and coordinate
+    various specialized modules for infrastructure management.
+    """
+    
+    def __init__(self, config: Optional[AgentConfig] = None, config_path: Optional[str] = None):
+        """
+        Initialize the Infrastructure Agent.
+        
+        Args:
+            config: Agent configuration object
+            config_path: Path to configuration file
+        """
+        # Load configuration
+        if config:
+            self.config = config
+        else:
+            self.config = load_config(config_path)
+        
+        # Set up logging
+        self._setup_logging()
+        
+        # Initialize LLM
+        self.llm = self._initialize_llm()
+        
+        # Initialize LangGraph workflow
+        self.workflow = self._create_workflow()
+        
+        # State management
+        self.current_state: Optional[AgentState] = None
+        
+        self.logger.info(f"Infrastructure Agent initialized with config: {self.config.name}")
+    
+    def _setup_logging(self) -> None:
+        """Set up logging configuration."""
+        logging.basicConfig(
+            level=getattr(logging, self.config.log_level.upper()),
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        self.logger = logging.getLogger(__name__)
+    
+    def _initialize_llm(self) -> ChatOpenAI:
+        """Initialize the language model for decision making."""
+        if not self.config.openai_api_key:
+            raise ValueError("OpenAI API key is required for agent operation")
+        
+        return ChatOpenAI(
+            api_key=self.config.openai_api_key,
+            model=self.config.model_name,
+            temperature=self.config.temperature,
+            max_tokens=self.config.max_tokens
+        )
+    
+    def _create_workflow(self) -> StateGraph:
+        """
+        Create the LangGraph workflow for infrastructure management.
+        
+        Returns:
+            Configured StateGraph workflow
+        """
+        workflow = StateGraph(AgentState)
+        
+        # Add nodes for each major phase
+        workflow.add_node("analyze_repository", self._analyze_repository_node)
+        workflow.add_node("assess_requirements", self._assess_infrastructure_requirements_node)
+        workflow.add_node("plan_security", self._plan_security_configuration_node)
+        workflow.add_node("generate_topology", self._generate_infrastructure_topology_node)
+        workflow.add_node("optimize_resources", self._optimize_resource_allocation_node)
+        workflow.add_node("generate_code", self._generate_infrastructure_code_node)
+        workflow.add_node("deploy_infrastructure", self._deploy_infrastructure_node)
+        workflow.add_node("monitor_deployment", self._monitor_deployment_node)
+        workflow.add_node("handle_error", self._handle_error_node)
+        
+        # Set entry point
+        workflow.set_entry_point("analyze_repository")
+        
+        # Add conditional edges for decision making
+        workflow.add_conditional_edges(
+            "analyze_repository",
+            self._route_after_analysis,
+            {
+                "assess_requirements": "assess_requirements",
+                "error": "handle_error"
+            }
+        )
+        
+        workflow.add_conditional_edges(
+            "assess_requirements",
+            self._route_after_requirements,
+            {
+                "plan_security": "plan_security",
+                "error": "handle_error"
+            }
+        )
+        
+        workflow.add_conditional_edges(
+            "plan_security",
+            self._route_after_security,
+            {
+                "generate_topology": "generate_topology",
+                "error": "handle_error"
+            }
+        )
+        
+        workflow.add_conditional_edges(
+            "generate_topology",
+            self._route_after_topology,
+            {
+                "optimize_resources": "optimize_resources",
+                "error": "handle_error"
+            }
+        )
+        
+        workflow.add_conditional_edges(
+            "optimize_resources",
+            self._route_after_optimization,
+            {
+                "generate_code": "generate_code",
+                "error": "handle_error"
+            }
+        )
+        
+        workflow.add_conditional_edges(
+            "generate_code",
+            self._route_after_code_generation,
+            {
+                "deploy_infrastructure": "deploy_infrastructure",
+                "error": "handle_error"
+            }
+        )
+        
+        workflow.add_conditional_edges(
+            "deploy_infrastructure",
+            self._route_after_deployment,
+            {
+                "monitor_deployment": "monitor_deployment",
+                "error": "handle_error",
+                "end": END
+            }
+        )
+        
+        workflow.add_edge("monitor_deployment", END)
+        workflow.add_edge("handle_error", END)
+        
+        return workflow.compile()
+    
+    async def analyze_repository(self, repository_url: str, **kwargs) -> AgentState:
+        """
+        Analyze a Git repository and plan infrastructure deployment.
+        
+        Args:
+            repository_url: Git repository URL to analyze
+            **kwargs: Additional parameters (target_environment, etc.)
+            
+        Returns:
+            Final agent state after processing
+        """
+        self.logger.info(f"Starting repository analysis for: {repository_url}")
+        
+        # Create initial state
+        initial_state = create_initial_state(
+            repository_url=repository_url,
+            target_environment=kwargs.get("target_environment", "dev"),
+            deployment_region=kwargs.get("deployment_region", self.config.aws.region),
+            user_requirements=kwargs.get("user_requirements", {})
+        )
+        
+        self.current_state = initial_state
+        
+        # Execute the workflow
+        try:
+            final_state = await self.workflow.ainvoke(initial_state)
+            self.current_state = final_state
+            self.logger.info("Repository analysis and infrastructure planning completed")
+            return final_state
+        except Exception as e:
+            self.logger.error(f"Workflow execution failed: {e}")
+            error_state = add_error(initial_state, str(e))
+            self.current_state = error_state
+            return error_state
+    
+    async def deploy_infrastructure(self, plan_id: str) -> AgentState:
+        """
+        Deploy infrastructure based on a previously generated plan.
+        
+        Args:
+            plan_id: Infrastructure plan identifier
+            
+        Returns:
+            Deployment result state
+        """
+        self.logger.info(f"Starting infrastructure deployment for plan: {plan_id}")
+        
+        if not self.current_state:
+            raise ValueError("No current state available. Run analyze_repository first.")
+        
+        # Update state to deployment phase
+        deployment_state = update_state_phase(self.current_state, DeploymentPhase.DEPLOYMENT)
+        
+        # Execute deployment workflow starting from deploy_infrastructure node
+        try:
+            final_state = await self.workflow.ainvoke(deployment_state)
+            self.current_state = final_state
+            self.logger.info("Infrastructure deployment completed")
+            return final_state
+        except Exception as e:
+            self.logger.error(f"Deployment failed: {e}")
+            error_state = add_error(deployment_state, str(e))
+            self.current_state = error_state
+            return error_state
+    
+    async def monitor_infrastructure(self, cluster_id: str) -> Dict[str, Any]:
+        """
+        Monitor deployed infrastructure and provide optimization recommendations.
+        
+        Args:
+            cluster_id: Kubernetes cluster identifier
+            
+        Returns:
+            Monitoring data and recommendations
+        """
+        self.logger.info(f"Starting infrastructure monitoring for cluster: {cluster_id}")
+        
+        # This will be implemented with actual monitoring logic
+        monitoring_data = {
+            "cluster_id": cluster_id,
+            "status": "healthy",
+            "metrics": {},
+            "recommendations": [],
+            "timestamp": datetime.utcnow()
+        }
+        
+        return monitoring_data
+    
+    # LangGraph Node Implementations
+    
+    async def _analyze_repository_node(self, state: AgentState) -> AgentState:
+        """Analyze Git repository to understand application requirements."""
+        self.logger.info("Executing repository analysis node")
+        
+        try:
+            updated_state = update_state_phase(state, DeploymentPhase.REPOSITORY_ANALYSIS)
+            
+            # TODO: Implement actual repository analysis
+            # This would include:
+            # - Clone repository
+            # - Analyze code structure and dependencies
+            # - Detect application framework and type
+            # - Extract configuration files
+            # - Assess security requirements
+            
+            # For now, create a mock analysis
+            mock_analysis = {
+                "url": state["repository_url"],
+                "name": "sample-app",
+                "language": "python",
+                "framework": "fastapi",
+                "dependencies": ["fastapi", "uvicorn", "sqlalchemy"],
+                "application_type": "api_service",
+                "dockerfile_present": True,
+                "k8s_manifests_present": False,
+                "infrastructure_requirements": {
+                    "compute": {"cpu": "500m", "memory": "512Mi"},
+                    "storage": {"persistent": False},
+                    "networking": {"load_balancer": True},
+                    "security": {"https": True, "authentication": True},
+                    "monitoring": {"metrics": True, "logging": True},
+                    "estimated_cost": 150.0,
+                    "compliance_requirements": ["SOC2"]
+                },
+                "security_analysis": {"vulnerabilities": []},
+                "complexity_score": 0.6,
+                "estimated_resources": {"instances": 2, "storage_gb": 20}
+            }
+            
+            updated_state["repository_analysis"] = mock_analysis
+            updated_state = update_progress(updated_state, "repository_analysis", 20.0)
+            
+            self.logger.info("Repository analysis completed successfully")
+            return updated_state
+            
+        except Exception as e:
+            self.logger.error(f"Repository analysis failed: {e}")
+            return add_error(state, f"Repository analysis failed: {e}")
+    
+    async def _assess_infrastructure_requirements_node(self, state: AgentState) -> AgentState:
+        """Assess infrastructure requirements based on repository analysis."""
+        self.logger.info("Executing infrastructure requirements assessment")
+        
+        try:
+            updated_state = update_state_phase(state, DeploymentPhase.INFRASTRUCTURE_PLANNING)
+            
+            # TODO: Implement actual requirements assessment
+            # This would include:
+            # - Resource sizing calculations
+            # - Network architecture planning
+            # - Storage requirements analysis
+            # - Scaling strategy determination
+            
+            # Use LLM for intelligent decision making
+            analysis = state["repository_analysis"]
+            if analysis:
+                prompt = f"""
+                Based on this application analysis:
+                - Language: {analysis['language']}
+                - Framework: {analysis['framework']}
+                - Dependencies: {analysis['dependencies']}
+                - Application Type: {analysis['application_type']}
+                
+                Recommend AWS infrastructure requirements including:
+                1. Compute resources (EC2 instance types, CPU, memory)
+                2. Storage requirements (EBS, EFS, S3)
+                3. Networking setup (VPC, subnets, load balancers)
+                4. Security configurations
+                5. Monitoring and logging setup
+                
+                Provide recommendations as structured data.
+                """
+                
+                messages = [
+                    SystemMessage(content="You are an AWS infrastructure expert."),
+                    HumanMessage(content=prompt)
+                ]
+                
+                response = await self.llm.ainvoke(messages)
+                
+                # TODO: Parse LLM response and structure requirements
+                mock_requirements = {
+                    "compute": {
+                        "instance_type": "t3.medium",
+                        "min_instances": 2,
+                        "max_instances": 10,
+                        "cpu_requests": "500m",
+                        "memory_requests": "512Mi"
+                    },
+                    "storage": {
+                        "ebs_volume_size": 20,
+                        "ebs_volume_type": "gp3",
+                        "backup_enabled": True
+                    },
+                    "networking": {
+                        "vpc_cidr": "10.0.0.0/16",
+                        "public_subnets": 2,
+                        "private_subnets": 2,
+                        "load_balancer_type": "application"
+                    },
+                    "security": {
+                        "encryption_at_rest": True,
+                        "encryption_in_transit": True,
+                        "iam_roles_required": True
+                    },
+                    "monitoring": {
+                        "cloudwatch_enabled": True,
+                        "prometheus_enabled": True,
+                        "log_retention_days": 30
+                    },
+                    "estimated_cost": 200.0,
+                    "compliance_requirements": ["SOC2", "GDPR"]
+                }
+                
+                updated_state["infrastructure_requirements"] = mock_requirements
+            
+            updated_state = update_progress(updated_state, "infrastructure_planning", 20.0)
+            
+            self.logger.info("Infrastructure requirements assessment completed")
+            return updated_state
+            
+        except Exception as e:
+            self.logger.error(f"Infrastructure requirements assessment failed: {e}")
+            return add_error(state, f"Requirements assessment failed: {e}")
+    
+    async def _plan_security_configuration_node(self, state: AgentState) -> AgentState:
+        """Plan security configuration for the infrastructure."""
+        self.logger.info("Executing security configuration planning")
+        
+        try:
+            updated_state = update_state_phase(state, DeploymentPhase.SECURITY_ASSESSMENT)
+            
+            # TODO: Implement actual security planning
+            mock_security_config = {
+                "iam_roles": [
+                    {
+                        "name": f"{self.config.security.iam_role_prefix}eks-cluster-role",
+                        "type": "service",
+                        "policies": ["AmazonEKSClusterPolicy"]
+                    },
+                    {
+                        "name": f"{self.config.security.iam_role_prefix}node-group-role",
+                        "type": "service", 
+                        "policies": ["AmazonEKSWorkerNodePolicy", "AmazonEKS_CNI_Policy", "AmazonEC2ContainerRegistryReadOnly"]
+                    }
+                ],
+                "policies": [],
+                "security_groups": [
+                    {
+                        "name": "eks-cluster-sg",
+                        "rules": [
+                            {"type": "ingress", "port": 443, "source": "0.0.0.0/0"}
+                        ]
+                    }
+                ],
+                "network_acls": [],
+                "encryption_config": {
+                    "ebs_encryption": True,
+                    "s3_encryption": True,
+                    "secrets_encryption": True
+                },
+                "compliance_controls": ["SOC2", "GDPR"],
+                "vulnerability_scan_results": None
+            }
+            
+            updated_state["security_assessment"] = mock_security_config
+            updated_state = update_progress(updated_state, "security_assessment", 15.0)
+            
+            self.logger.info("Security configuration planning completed")
+            return updated_state
+            
+        except Exception as e:
+            self.logger.error(f"Security configuration planning failed: {e}")
+            return add_error(state, f"Security planning failed: {e}")
+    
+    async def _generate_infrastructure_topology_node(self, state: AgentState) -> AgentState:
+        """Generate infrastructure topology and architecture diagrams."""
+        self.logger.info("Executing infrastructure topology generation")
+        
+        try:
+            updated_state = update_state_phase(state, DeploymentPhase.TOPOLOGY_GENERATION)
+            
+            # TODO: Implement actual topology generation with diagrams
+            # This would create visual representations of the infrastructure
+            
+            updated_state = update_progress(updated_state, "topology_generation", 10.0)
+            
+            self.logger.info("Infrastructure topology generation completed")
+            return updated_state
+            
+        except Exception as e:
+            self.logger.error(f"Infrastructure topology generation failed: {e}")
+            return add_error(state, f"Topology generation failed: {e}")
+    
+    async def _optimize_resource_allocation_node(self, state: AgentState) -> AgentState:
+        """Optimize resource allocation for cost and performance."""
+        self.logger.info("Executing resource optimization")
+        
+        try:
+            updated_state = update_state_phase(state, DeploymentPhase.RESOURCE_OPTIMIZATION)
+            
+            # TODO: Implement actual resource optimization
+            optimization_recommendations = [
+                "Use spot instances for non-critical workloads",
+                "Enable cluster autoscaler for dynamic scaling",
+                "Implement horizontal pod autoscaling",
+                "Use reserved instances for baseline capacity"
+            ]
+            
+            updated_state["optimization_recommendations"] = optimization_recommendations
+            updated_state = update_progress(updated_state, "resource_optimization", 10.0)
+            
+            self.logger.info("Resource optimization completed")
+            return updated_state
+            
+        except Exception as e:
+            self.logger.error(f"Resource optimization failed: {e}")
+            return add_error(state, f"Resource optimization failed: {e}")
+    
+    async def _generate_infrastructure_code_node(self, state: AgentState) -> AgentState:
+        """Generate Infrastructure as Code (Terraform/CDK)."""
+        self.logger.info("Executing infrastructure code generation")
+        
+        try:
+            updated_state = update_state_phase(state, DeploymentPhase.CODE_GENERATION)
+            
+            # TODO: Implement actual IaC code generation
+            mock_plan = {
+                "plan_id": f"plan-{state['session_id'][:8]}",
+                "vpc_configuration": {"cidr": "10.0.0.0/16"},
+                "eks_configuration": {"version": "1.28"},
+                "compute_resources": [],
+                "storage_resources": [],
+                "networking_config": {},
+                "security_config": state["security_assessment"],
+                "monitoring_config": {},
+                "estimated_cost": {"monthly": 200.0},
+                "deployment_timeline": {"estimated_duration": "30 minutes"},
+                "terraform_code": "# Terraform code would be generated here",
+                "cdk_code": None,
+                "k8s_manifests": ["# Kubernetes manifests would be generated here"]
+            }
+            
+            updated_state["infrastructure_plan"] = mock_plan
+            updated_state = update_progress(updated_state, "code_generation", 15.0)
+            
+            self.logger.info("Infrastructure code generation completed")
+            return updated_state
+            
+        except Exception as e:
+            self.logger.error(f"Infrastructure code generation failed: {e}")
+            return add_error(state, f"Code generation failed: {e}")
+    
+    async def _deploy_infrastructure_node(self, state: AgentState) -> AgentState:
+        """Deploy the generated infrastructure."""
+        self.logger.info("Executing infrastructure deployment")
+        
+        try:
+            updated_state = update_state_phase(state, DeploymentPhase.DEPLOYMENT)
+            
+            # TODO: Implement actual infrastructure deployment
+            # This would execute Terraform/CDK and deploy to AWS
+            
+            if self.config.dry_run:
+                self.logger.info("Dry run mode - infrastructure deployment simulated")
+                deployment_result = {
+                    "deployment_id": f"deploy-{state['session_id'][:8]}",
+                    "status": "completed",
+                    "cluster_name": f"eks-cluster-{state['session_id'][:8]}",
+                    "cluster_arn": f"arn:aws:eks:us-west-2:123456789012:cluster/eks-cluster-{state['session_id'][:8]}",
+                    "vpc_id": f"vpc-{state['session_id'][:8]}",
+                    "application_endpoints": ["https://app.example.com"],
+                    "monitoring_dashboards": ["https://grafana.example.com"],
+                    "cost_analysis": {"actual_monthly": 195.0},
+                    "security_scan_results": {"vulnerabilities": 0},
+                    "deployment_logs": ["Deployment completed successfully"],
+                    "rollback_plan": {}
+                }
+            else:
+                # Actual deployment would happen here
+                deployment_result = {
+                    "deployment_id": f"deploy-{state['session_id'][:8]}",
+                    "status": "pending",
+                    "cluster_name": "",
+                    "cluster_arn": "",
+                    "vpc_id": "",
+                    "application_endpoints": [],
+                    "monitoring_dashboards": [],
+                    "cost_analysis": {},
+                    "security_scan_results": {},
+                    "deployment_logs": [],
+                    "rollback_plan": {}
+                }
+            
+            updated_state["deployment_result"] = deployment_result
+            updated_state = update_progress(updated_state, "deployment", 20.0)
+            
+            self.logger.info("Infrastructure deployment completed")
+            return updated_state
+            
+        except Exception as e:
+            self.logger.error(f"Infrastructure deployment failed: {e}")
+            return add_error(state, f"Infrastructure deployment failed: {e}")
+    
+    async def _monitor_deployment_node(self, state: AgentState) -> AgentState:
+        """Monitor the deployed infrastructure."""
+        self.logger.info("Executing deployment monitoring")
+        
+        try:
+            updated_state = update_state_phase(state, DeploymentPhase.MONITORING)
+            
+            # TODO: Implement actual monitoring setup
+            monitoring_data = {
+                "cluster_metrics": {},
+                "application_metrics": {},
+                "cost_metrics": {},
+                "security_metrics": {},
+                "performance_metrics": {},
+                "alerts": [],
+                "recommendations": ["Enable auto-scaling", "Set up cost alerts"],
+                "last_updated": datetime.utcnow()
+            }
+            
+            updated_state["monitoring_data"] = monitoring_data
+            updated_state = update_progress(updated_state, "monitoring", 10.0)
+            
+            self.logger.info("Deployment monitoring setup completed")
+            return updated_state
+            
+        except Exception as e:
+            self.logger.error(f"Deployment monitoring failed: {e}")
+            return add_error(state, f"Monitoring setup failed: {e}")
+    
+    async def _handle_error_node(self, state: AgentState) -> AgentState:
+        """Handle errors and potentially initiate rollback."""
+        self.logger.info("Executing error handling")
+        
+        try:
+            updated_state = update_state_phase(state, DeploymentPhase.FAILED)
+            
+            # TODO: Implement error handling and rollback logic
+            if state.get("rollback_required", False):
+                self.logger.warning("Initiating rollback due to deployment failure")
+                # Rollback logic would go here
+            
+            self.logger.error(f"Deployment failed with errors: {state.get('errors', [])}")
+            return updated_state
+            
+        except Exception as e:
+            self.logger.error(f"Error handling failed: {e}")
+            return add_error(state, f"Error handling failed: {e}")
+    
+    # Routing Functions for LangGraph
+    
+    def _route_after_analysis(self, state: AgentState) -> str:
+        """Route after repository analysis."""
+        if state.get("errors"):
+            return "error"
+        if state.get("repository_analysis"):
+            return "assess_requirements"
+        return "error"
+    
+    def _route_after_requirements(self, state: AgentState) -> str:
+        """Route after requirements assessment."""
+        if state.get("errors"):
+            return "error"
+        if state.get("infrastructure_requirements"):
+            return "plan_security"
+        return "error"
+    
+    def _route_after_security(self, state: AgentState) -> str:
+        """Route after security planning."""
+        if state.get("errors"):
+            return "error"
+        if state.get("security_assessment"):
+            return "generate_topology"
+        return "error"
+    
+    def _route_after_topology(self, state: AgentState) -> str:
+        """Route after topology generation."""
+        if state.get("errors"):
+            return "error"
+        return "optimize_resources"
+    
+    def _route_after_optimization(self, state: AgentState) -> str:
+        """Route after resource optimization."""
+        if state.get("errors"):
+            return "error"
+        return "generate_code"
+    
+    def _route_after_code_generation(self, state: AgentState) -> str:
+        """Route after code generation."""
+        if state.get("errors"):
+            return "error"
+        if state.get("infrastructure_plan"):
+            return "deploy_infrastructure"
+        return "error"
+    
+    def _route_after_deployment(self, state: AgentState) -> str:
+        """Route after deployment."""
+        if state.get("errors"):
+            return "error"
+        deployment_result = state.get("deployment_result")
+        if deployment_result and deployment_result.get("status") == "completed":
+            return "monitor_deployment"
+        elif deployment_result and deployment_result.get("status") == "failed":
+            return "error"
+        return "end"
+
+
+# Utility functions for common agent operations
+
+async def create_agent_from_config(config_path: str) -> InfrastructureAgent:
+    """
+    Create an Infrastructure Agent from a configuration file.
+    
+    Args:
+        config_path: Path to the configuration file
+        
+    Returns:
+        Configured InfrastructureAgent instance
+    """
+    config = load_config(config_path)
+    return InfrastructureAgent(config=config)
+
+
+async def quick_analyze(repository_url: str, **kwargs) -> AgentState:
+    """
+    Quick analysis of a repository with default configuration.
+    
+    Args:
+        repository_url: Git repository URL to analyze
+        **kwargs: Additional parameters
+        
+    Returns:
+        Analysis results
+    """
+    agent = InfrastructureAgent()
+    return await agent.analyze_repository(repository_url, **kwargs) 
