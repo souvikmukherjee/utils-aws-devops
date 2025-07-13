@@ -1,3 +1,33 @@
+Metadata-Version: 2.4
+Name: agentic-infra-manager
+Version: 0.1.0
+Summary: Intelligent agent for autonomous AWS infrastructure planning, provisioning, and management
+Author-email: Infrastructure AI Agent <agent@inframanager.ai>
+License: MIT
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: langgraph>=0.0.40
+Requires-Dist: langchain>=0.1.0
+Requires-Dist: boto3>=1.34.0
+Requires-Dist: kubernetes>=28.1.0
+Requires-Dist: diagrams>=0.23.4
+Requires-Dist: fastapi>=0.104.0
+Requires-Dist: click>=8.1.0
+Requires-Dist: rich>=13.6.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: black>=23.9.0; extra == "dev"
+Requires-Dist: flake8>=6.1.0; extra == "dev"
+Requires-Dist: mypy>=1.6.0; extra == "dev"
+
 # Agentic AI Infrastructure Management System
 
 An intelligent agent that autonomously plans, provisions, and manages AWS infrastructure with specialized focus on Kubernetes cluster deployment and application lifecycle management.
@@ -227,8 +257,6 @@ echo "✅ Setup complete if you see 'Progress: 100.0% complete' above"
 ### Basic Repository Analysis
 ```bash
 # Analyze a repository and generate complete infrastructure plan
-infra-agent analyze https://github.com/souvikmukherjee/learning-ai-agents --target-env prod --output learning-ai-agents-prod.json
-
 infra-agent analyze https://github.com/spring-projects/spring-petclinic --target-env dev --output petclinic-dev.json
 
 # Expected output:

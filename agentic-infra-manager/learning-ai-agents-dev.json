@@ -1,58 +1,130 @@
 {
-  "session_id": "d1be3c42-10b2-45a6-b150-dc48a97f3b77",
+  "session_id": "c6ca895e-604f-4681-83c3-f69875d120cc",
   "agent_version": "0.1.0",
-  "created_at": "2025-07-13 15:13:40.911216",
-  "last_updated": "2025-07-13 15:13:42.703512",
-  "current_phase": "DeploymentPhase.FAILED",
-  "repository_url": "https://github.com/spring-projects/spring-petclinic",
+  "created_at": "2025-07-13 15:25:38.663379",
+  "last_updated": "2025-07-13 15:25:42.326999",
+  "current_phase": "DeploymentPhase.DEPLOYMENT",
+  "repository_url": "https://github.com/souvikmukherjee/learning-ai-agents",
   "target_environment": "dev",
   "deployment_region": "ap-southeast-2",
   "user_requirements": {},
   "repository_analysis": {
-    "url": "https://github.com/spring-projects/spring-petclinic",
-    "name": "sample-app",
-    "language": "python",
-    "framework": "fastapi",
+    "url": "https://github.com/souvikmukherjee/learning-ai-agents",
+    "name": "learning-ai-agents",
+    "language": "typescript",
+    "framework": "nextjs",
     "dependencies": [
-      "fastapi",
-      "uvicorn",
-      "sqlalchemy"
+      "@headlessui/react",
+      "@heroicons/react",
+      "@prisma/client",
+      "@tavily/core",
+      "axios",
+      "html2canvas",
+      "jspdf",
+      "next",
+      "next-auth",
+      "openai",
+      "prisma",
+      "react",
+      "react-dom",
+      "zod",
+      "@eslint/eslintrc",
+      "@mswjs/data",
+      "@tailwindcss/postcss",
+      "@testing-library/dom",
+      "@testing-library/jest-dom",
+      "@testing-library/react",
+      "@testing-library/user-event",
+      "@types/jest",
+      "@types/node",
+      "@types/react",
+      "@types/react-dom",
+      "@types/supertest",
+      "eslint",
+      "eslint-config-next",
+      "jest",
+      "jest-environment-jsdom",
+      "msw",
+      "node-mocks-http",
+      "supertest",
+      "tailwindcss",
+      "ts-jest",
+      "typescript"
     ],
-    "application_type": "api_service",
-    "dockerfile_present": true,
+    "application_type": "ApplicationType.WEB_APP",
+    "dockerfile_present": false,
     "k8s_manifests_present": false,
     "infrastructure_requirements": {
       "compute": {
-        "cpu": "500m",
-        "memory": "512Mi"
+        "cpu": "550m",
+        "memory": "563Mi",
+        "instances": 2
       },
       "storage": {
-        "persistent": false,
-        "size_gb": 20
+        "persistent": true,
+        "size_gb": 10
       },
       "networking": {
-        "load_balancer": true
+        "load_balancer": true,
+        "cdn": true
       },
       "security": {
-        "https": true,
-        "authentication": true
+        "encryption_at_rest": true,
+        "encryption_in_transit": true,
+        "authentication_required": true,
+        "authorization_required": true,
+        "network_policies": true,
+        "secrets_management": true
       },
       "monitoring": {
-        "metrics": true,
-        "logging": true
+        "metrics_collection": true,
+        "log_aggregation": true,
+        "health_checks": true,
+        "alerting": true,
+        "distributed_tracing": false
       },
-      "estimated_cost": 150.0,
+      "estimated_cost": 165.0,
       "compliance_requirements": [
-        "SOC2"
+        "AWS-Well-Architected",
+        "SOC2",
+        "GDPR"
       ]
     },
     "security_analysis": {
-      "vulnerabilities": []
+      "vulnerabilities": [],
+      "security_issues": [
+        "Potential secret exposure in openai.test.ts"
+      ],
+      "recommendations": [
+        "Review potential secret exposures and use environment variables",
+        "Implement proper input validation",
+        "Use HTTPS for all communications",
+        "Implement rate limiting",
+        "Regular security updates for dependencies"
+      ],
+      "security_score": 0.6000000000000001,
+      "security_dependencies": [
+        "next-auth"
+      ]
     },
-    "complexity_score": 0.6,
+    "complexity_score": 1.0,
     "estimated_resources": {
-      "instances": 2,
-      "storage_gb": 20
+      "instances": {
+        "min": 2,
+        "max": 12,
+        "desired": 4
+      },
+      "instance_types": [
+        "t3.medium",
+        "t3.large",
+        "t3.xlarge"
+      ],
+      "storage_gb": 10,
+      "cpu_requests": "550m",
+      "memory_requests": "563Mi",
+      "estimated_monthly_cost": 165.0,
+      "auto_scaling_enabled": true,
+      "load_balancer_required": true
     }
   },
   "infrastructure_requirements": null,
@@ -101,7 +173,7 @@
     "vulnerability_scan_results": null
   },
   "infrastructure_plan": {
-    "plan_id": "plan-20250713-151342",
+    "plan_id": "plan-20250713-152542",
     "vpc_configuration": "NetworkTopology(vpc_cidr='10.0.0.0/16', availability_zones=['ap-southeast-2a', 'ap-southeast-2b'], public_subnets=[{'cidr': '10.0.0.0/24', 'availability_zone': 'ap-southeast-2a', 'map_public_ip_on_launch': True, 'name': 'public-subnet-1'}, {'cidr': '10.0.1.0/24', 'availability_zone': 'ap-southeast-2b', 'map_public_ip_on_launch': True, 'name': 'public-subnet-2'}], private_subnets=[{'cidr': '10.0.10.0/24', 'availability_zone': 'ap-southeast-2a', 'map_public_ip_on_launch': False, 'name': 'private-subnet-1'}, {'cidr': '10.0.11.0/24', 'availability_zone': 'ap-southeast-2b', 'map_public_ip_on_launch': False, 'name': 'private-subnet-2'}], nat_gateways=1, internet_gateway=True, vpc_endpoints=['s3', 'ecr.api', 'ecr.dkr', 'logs'], route_tables=[{'name': 'public-route-table', 'subnet_type': 'public', 'routes': [{'destination': '0.0.0.0/0', 'target': 'internet_gateway'}]}, {'name': 'private-route-table', 'subnet_type': 'private', 'routes': [{'destination': '0.0.0.0/0', 'target': 'nat_gateway'}]}])",
     "eks_configuration": {
       "cluster_name": "eks-dev-cluster",
@@ -213,9 +285,10 @@
         }
       }
     },
-    "compute_resources": "ComputeConfiguration(instance_types=['t3.micro', 't3.small', 't3.medium'], min_instances=1, max_instances=3, desired_instances=1, auto_scaling_enabled=True, spot_instances_enabled=True, spot_percentage=50)",
+    "compute_resources": "ComputeConfiguration(instance_types=['t3.micro', 't3.small', 't3.medium'], min_instances=1, max_instances=5, desired_instances=2, auto_scaling_enabled=True, spot_instances_enabled=True, spot_percentage=50)",
     "storage_resources": [
-      "StorageConfiguration(storage_type='ebs', size_gb=20, iops=None, throughput=None, encryption_enabled=True, backup_enabled=False, retention_days=7)"
+      "StorageConfiguration(storage_type='ebs', size_gb=10, iops=None, throughput=None, encryption_enabled=True, backup_enabled=False, retention_days=7)",
+      "StorageConfiguration(storage_type='efs', size_gb=50, iops=None, throughput=100, encryption_enabled=True, backup_enabled=False, retention_days=30)"
     ],
     "database_resources": null,
     "networking_config": "NetworkTopology(vpc_cidr='10.0.0.0/16', availability_zones=['ap-southeast-2a', 'ap-southeast-2b'], public_subnets=[{'cidr': '10.0.0.0/24', 'availability_zone': 'ap-southeast-2a', 'map_public_ip_on_launch': True, 'name': 'public-subnet-1'}, {'cidr': '10.0.1.0/24', 'availability_zone': 'ap-southeast-2b', 'map_public_ip_on_launch': True, 'name': 'public-subnet-2'}], private_subnets=[{'cidr': '10.0.10.0/24', 'availability_zone': 'ap-southeast-2a', 'map_public_ip_on_launch': False, 'name': 'private-subnet-1'}, {'cidr': '10.0.11.0/24', 'availability_zone': 'ap-southeast-2b', 'map_public_ip_on_launch': False, 'name': 'private-subnet-2'}], nat_gateways=1, internet_gateway=True, vpc_endpoints=['s3', 'ecr.api', 'ecr.dkr', 'logs'], route_tables=[{'name': 'public-route-table', 'subnet_type': 'public', 'routes': [{'destination': '0.0.0.0/0', 'target': 'internet_gateway'}]}, {'name': 'private-route-table', 'subnet_type': 'private', 'routes': [{'destination': '0.0.0.0/0', 'target': 'nat_gateway'}]}])",
@@ -257,17 +330,17 @@
     },
     "deployment_strategy": "rolling",
     "estimated_cost": {
-      "monthly": 167.24,
+      "monthly": 188.78,
       "breakdown": {
         "eks_cluster": 72.0,
-        "compute": 7.54,
-        "storage": 2.0,
+        "compute": 15.08,
+        "storage": 16.0,
         "database": 0.0,
         "networking": 65.7,
         "monitoring": 20.0
       },
       "currency": "USD",
-      "estimated_on": "2025-07-13T15:13:42.698400"
+      "estimated_on": "2025-07-13T15:25:42.307874"
     },
     "deployment_timeline": {
       "estimated_duration": "45 minutes",
@@ -299,32 +372,91 @@
         }
       ]
     },
-    "terraform_code": null,
+    "terraform_code": [
+      "/tmp/agent-workspace/iac/terraform/dev/main.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/variables.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/outputs.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/provider.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/modules/vpc/main.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/modules/vpc/variables.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/modules/vpc/outputs.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/modules/eks/main.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/modules/eks/variables.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/modules/eks/outputs.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/dev.tfvars",
+      "/tmp/agent-workspace/iac/terraform/dev/backend.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/README.md",
+      "/tmp/agent-workspace/iac/terraform/dev/kubernetes/namespace.yaml",
+      "/tmp/agent-workspace/iac/terraform/dev/kubernetes/deployment.yaml",
+      "/tmp/agent-workspace/iac/terraform/dev/kubernetes/service.yaml",
+      "/tmp/agent-workspace/iac/terraform/dev/kubernetes/ingress.yaml",
+      "/tmp/agent-workspace/iac/terraform/dev/kubernetes/hpa.yaml"
+    ],
     "cdk_code": null,
-    "k8s_manifests": []
+    "k8s_manifests": [],
+    "generated_files": [
+      "/tmp/agent-workspace/iac/terraform/dev/main.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/variables.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/outputs.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/provider.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/modules/vpc/main.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/modules/vpc/variables.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/modules/vpc/outputs.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/modules/eks/main.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/modules/eks/variables.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/modules/eks/outputs.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/dev.tfvars",
+      "/tmp/agent-workspace/iac/terraform/dev/backend.tf",
+      "/tmp/agent-workspace/iac/terraform/dev/README.md",
+      "/tmp/agent-workspace/iac/terraform/dev/kubernetes/namespace.yaml",
+      "/tmp/agent-workspace/iac/terraform/dev/kubernetes/deployment.yaml",
+      "/tmp/agent-workspace/iac/terraform/dev/kubernetes/service.yaml",
+      "/tmp/agent-workspace/iac/terraform/dev/kubernetes/ingress.yaml",
+      "/tmp/agent-workspace/iac/terraform/dev/kubernetes/hpa.yaml"
+    ],
+    "modules": [
+      "IaCModule(name='vpc', type='vpc', dependencies=[], variables={}, outputs={}, resources=[], file_path='/tmp/agent-workspace/iac/terraform/dev/modules/vpc')",
+      "IaCModule(name='eks', type='eks', dependencies=['vpc'], variables={}, outputs={}, resources=[], file_path='/tmp/agent-workspace/iac/terraform/dev/modules/eks')"
+    ]
   },
   "deployment_strategy": null,
-  "optimization_recommendations": [],
-  "deployment_result": null,
+  "optimization_recommendations": [
+    "Use spot instances for non-critical workloads",
+    "Enable cluster autoscaler for dynamic scaling",
+    "Implement horizontal pod autoscaling",
+    "Use reserved instances for baseline capacity"
+  ],
+  "deployment_result": {
+    "deployment_id": "deploy-c6ca895e",
+    "status": "pending",
+    "cluster_name": "",
+    "cluster_arn": "",
+    "vpc_id": "",
+    "application_endpoints": [],
+    "monitoring_dashboards": [],
+    "cost_analysis": {},
+    "security_scan_results": {},
+    "deployment_logs": [],
+    "rollback_plan": {}
+  },
   "monitoring_data": null,
   "decision_history": [],
   "current_decisions": {},
   "confidence_scores": {},
-  "errors": [
-    "Topology generation failed: cannot import name 'DynamoDB' from 'diagrams.aws.database' (/Users/souvikmukherjee/Documents/02.Work/05.NAB/03.Code/utils-aws-devops/agentic-infra-manager/venv/lib/python3.13/site-packages/diagrams/aws/database.py)"
-  ],
+  "errors": [],
   "warnings": [],
   "rollback_required": false,
-  "progress_percentage": 55.0,
+  "progress_percentage": 100.0,
   "completed_steps": [
     "repository_analysis",
     "infrastructure_planning",
-    "security_assessment"
-  ],
-  "pending_steps": [
+    "security_assessment",
+    "topology_generation",
     "resource_optimization",
+    "code_generation",
     "deployment"
   ],
+  "pending_steps": [],
   "created_resources": [],
   "resource_dependencies": {},
   "cleanup_required": [],
@@ -335,16 +467,16 @@
   "security_violations": [],
   "audit_trail": [
     {
-      "timestamp": "2025-07-13 15:13:40.911216",
+      "timestamp": "2025-07-13 15:25:38.663379",
       "action": "session_initialized",
       "details": {
-        "session_id": "d1be3c42-10b2-45a6-b150-dc48a97f3b77",
-        "repository_url": "https://github.com/spring-projects/spring-petclinic",
+        "session_id": "c6ca895e-604f-4681-83c3-f69875d120cc",
+        "repository_url": "https://github.com/souvikmukherjee/learning-ai-agents",
         "target_environment": "dev"
       }
     },
     {
-      "timestamp": "2025-07-13 15:13:40.912704",
+      "timestamp": "2025-07-13 15:25:38.664797",
       "action": "phase_transition",
       "details": {
         "previous_phase": "DeploymentPhase.INITIALIZATION",
@@ -352,7 +484,7 @@
       }
     },
     {
-      "timestamp": "2025-07-13 15:13:41.458824",
+      "timestamp": "2025-07-13 15:25:40.987807",
       "action": "phase_transition",
       "details": {
         "previous_phase": "DeploymentPhase.REPOSITORY_ANALYSIS",
@@ -360,7 +492,7 @@
       }
     },
     {
-      "timestamp": "2025-07-13 15:13:42.701177",
+      "timestamp": "2025-07-13 15:25:42.312024",
       "action": "phase_transition",
       "details": {
         "previous_phase": "DeploymentPhase.INFRASTRUCTURE_PLANNING",
@@ -368,7 +500,7 @@
       }
     },
     {
-      "timestamp": "2025-07-13 15:13:42.701977",
+      "timestamp": "2025-07-13 15:25:42.313937",
       "action": "phase_transition",
       "details": {
         "previous_phase": "DeploymentPhase.SECURITY_ASSESSMENT",
@@ -376,19 +508,27 @@
       }
     },
     {
-      "timestamp": "2025-07-13 15:13:42.702773",
-      "action": "error_occurred",
+      "timestamp": "2025-07-13 15:25:42.316726",
+      "action": "phase_transition",
       "details": {
-        "error_message": "Topology generation failed: cannot import name 'DynamoDB' from 'diagrams.aws.database' (/Users/souvikmukherjee/Documents/02.Work/05.NAB/03.Code/utils-aws-devops/agentic-infra-manager/venv/lib/python3.13/site-packages/diagrams/aws/database.py)",
-        "error_details": {}
+        "previous_phase": "DeploymentPhase.TOPOLOGY_GENERATION",
+        "new_phase": "DeploymentPhase.RESOURCE_OPTIMIZATION"
       }
     },
     {
-      "timestamp": "2025-07-13 15:13:42.703514",
+      "timestamp": "2025-07-13 15:25:42.318072",
       "action": "phase_transition",
       "details": {
-        "previous_phase": "DeploymentPhase.SECURITY_ASSESSMENT",
-        "new_phase": "DeploymentPhase.FAILED"
+        "previous_phase": "DeploymentPhase.RESOURCE_OPTIMIZATION",
+        "new_phase": "DeploymentPhase.CODE_GENERATION"
+      }
+    },
+    {
+      "timestamp": "2025-07-13 15:25:42.326986",
+      "action": "phase_transition",
+      "details": {
+        "previous_phase": "DeploymentPhase.CODE_GENERATION",
+        "new_phase": "DeploymentPhase.DEPLOYMENT"
       }
     }
   ]

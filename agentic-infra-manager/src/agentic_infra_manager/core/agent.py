@@ -535,44 +535,38 @@ class InfrastructureAgent:
         try:
             updated_state = update_state_phase(state, DeploymentPhase.DEPLOYMENT)
             
-            # TODO: Implement actual infrastructure deployment
-            # This would execute Terraform/CDK and deploy to AWS
+            # Use actual terraform deployer
+            from ..modules.terraform_deployer import TerraformDeployer
+            deployer = TerraformDeployer(self.config)
             
-            if self.config.dry_run:
-                self.logger.info("Dry run mode - infrastructure deployment simulated")
-                deployment_result = {
-                    "deployment_id": f"deploy-{state['session_id'][:8]}",
-                    "status": "completed",
-                    "cluster_name": f"eks-cluster-{state['session_id'][:8]}",
-                    "cluster_arn": f"arn:aws:eks:us-west-2:123456789012:cluster/eks-cluster-{state['session_id'][:8]}",
-                    "vpc_id": f"vpc-{state['session_id'][:8]}",
-                    "application_endpoints": ["https://app.example.com"],
-                    "monitoring_dashboards": ["https://grafana.example.com"],
-                    "cost_analysis": {"actual_monthly": 195.0},
-                    "security_scan_results": {"vulnerabilities": 0},
-                    "deployment_logs": ["Deployment completed successfully"],
-                    "rollback_plan": {}
-                }
-            else:
-                # Actual deployment would happen here
-                deployment_result = {
-                    "deployment_id": f"deploy-{state['session_id'][:8]}",
-                    "status": "pending",
-                    "cluster_name": "",
-                    "cluster_arn": "",
-                    "vpc_id": "",
-                    "application_endpoints": [],
-                    "monitoring_dashboards": [],
-                    "cost_analysis": {},
-                    "security_scan_results": {},
-                    "deployment_logs": [],
-                    "rollback_plan": {}
-                }
+            # Get generated terraform files from the infrastructure plan
+            infrastructure_plan = state["infrastructure_plan"]
+            terraform_files = infrastructure_plan.get("terraform_code", [])
             
+            if not terraform_files:
+                self.logger.error("No terraform files found in infrastructure plan")
+                return add_error(state, "No terraform files available for deployment")
+            
+            # Deploy infrastructure
+            self.logger.info(f"Deploying {len(terraform_files)} terraform files")
+            deployment_result = await deployer.deploy_infrastructure(
+                infrastructure_plan=infrastructure_plan,
+                terraform_files=terraform_files,
+                environment=state.get("target_environment", "dev"),
+                auto_approve=True  # Auto-approve for automated deployment
+            )
+            
+            # Update state with deployment result
             updated_state["deployment_result"] = deployment_result
-            updated_state = update_progress(updated_state, "deployment", 20.0)
             
-            self.logger.info("Infrastructure deployment completed")
+            # Update progress based on deployment status
+            if deployment_result["status"] == "completed":
+                updated_state = update_progress(updated_state, "deployment", 20.0)
+                self.logger.info(f"Infrastructure deployment completed successfully: {deployment_result['deployment_id']}")
+            else:
+                self.logger.error(f"Infrastructure deployment failed: {deployment_result.get('deployment_logs', ['Unknown error'])}")
+                return add_error(state, f"Infrastructure deployment failed: {deployment_result['deployment_id']}")
+            
             return updated_state
             
         except Exception as e:

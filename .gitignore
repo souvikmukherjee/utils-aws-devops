@@ -3,3 +3,15 @@ agentic-infra-manager/config/agent.yaml
 agentic-infra-manager/.env
 agentic-infra-manager/venv/
 agentic-infra-manager/modules/
+agentic-infra-manager/src/agentic_infra_manager/__pycache__/
+agentic-infra-manager/src/agentic_infra_manager/agentic_infra_manager.egg-info/
+agentic-infra-manager/src/agentic_infra_manager/agentic_infra_manager.egg-info/PKG-INFO
+agentic-infra-manager/src/agentic_infra_manager/agentic_infra_manager.egg-info/SOURCES.txt
+agentic-infra-manager/src/agentic_infra_manager/agentic_infra_manager.egg-info/dependency_links.txt
+agentic-infra-manager/src/agentic_infra_manager/agentic_infra_manager.egg-info/entry_points.txt
+agentic-infra-manager/src/agentic_infra_manager/agentic_infra_manager.egg-info/requires.txt
+agentic-infra-manager/src/agentic_infra_manager/agentic_infra_manager.egg-info/top_level.txt
+agentic-infra-manager/src/agentic_infra_manager/agentic_infra_manager.egg-info/zip-safe
+agentic-infra-manager/src/agentic_infra_manager/agentic_infra_manager.egg-info/zip-safe
+agentic_infra_manager/src/modules/__pycache__/
+agentic_infra_manager/src/core/__pycache__/

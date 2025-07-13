@@ -315,6 +315,7 @@ class TerraformGenerator:
           
           project_name        = local.project_name
           environment         = local.environment
+          aws_region         = var.aws_region
           vpc_cidr           = var.vpc_cidr
           availability_zones = var.availability_zones
           
@@ -327,6 +328,7 @@ class TerraformGenerator:
           
           project_name       = local.project_name
           environment        = local.environment
+          cluster_name       = "${{local.project_name}}-${{local.environment}}-cluster"
           cluster_version    = var.cluster_version
           
           vpc_id                = module.vpc.vpc_id
@@ -1280,21 +1282,48 @@ class TerraformGenerator:
     
     def _generate_backend_tf(self, iac_config: IaCConfig) -> str:
         """Generate Terraform backend configuration."""
-        return textwrap.dedent(f'''
-        # Terraform backend configuration
         
-        terraform {{
-          backend "s3" {{
-            bucket = "{iac_config.project_name}-terraform-state"
-            key    = "{iac_config.environment}/terraform.tfstate"
-            region = "{self.config.aws.region}"
+        # Always use local state for development and testing
+        # This avoids issues with missing S3 buckets during initial setup
+        if iac_config.environment in ["dev", "development", "local", "test"]:
+            return textwrap.dedent(f'''
+            # Terraform backend configuration - local state for {iac_config.environment} environment
             
-            # DynamoDB table for state locking
-            dynamodb_table = "{iac_config.project_name}-terraform-locks"
-            encrypt        = true
-          }}
-        }}
-        ''')
+            terraform {{
+              # Using local state for development
+              # For production, consider using remote state with S3 backend
+              # after creating the required S3 bucket and DynamoDB table
+            }}
+            ''')
+        else:
+            # For production environments, provide both local and remote options
+            # with instructions on how to switch
+            return textwrap.dedent(f'''
+            # Terraform backend configuration - {iac_config.environment} environment
+            
+            # Option 1: Local state (default for initial setup)
+            terraform {{
+              # Using local state - comment out for remote state
+            }}
+            
+            # Option 2: Remote state with S3 (uncomment after creating S3 bucket)
+            # terraform {{
+            #   backend "s3" {{
+            #     bucket = "{iac_config.project_name}-terraform-state-{iac_config.environment}"
+            #     key    = "{iac_config.environment}/terraform.tfstate"
+            #     region = "{self.config.aws.region}"
+            #     
+            #     # DynamoDB table for state locking
+            #     dynamodb_table = "{iac_config.project_name}-terraform-locks-{iac_config.environment}"
+            #     encrypt        = true
+            #   }}
+            # }}
+            
+            # To use remote state:
+            # 1. Create S3 bucket: aws s3 mb s3://{iac_config.project_name}-terraform-state-{iac_config.environment}
+            # 2. Create DynamoDB table: aws dynamodb create-table --table-name {iac_config.project_name}-terraform-locks-{iac_config.environment} --attribute-definitions AttributeName=LockID,AttributeType=S --key-schema AttributeName=LockID,KeyType=HASH --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
+            # 3. Uncomment the backend configuration above and comment out the local state configuration
+            ''')
     
     def _generate_terraform_readme(
         self,
