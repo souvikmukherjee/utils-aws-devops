@@ -1,3 +1,5 @@
 .env
 agentic-infra-manager/config/agent.yaml
 agentic-infra-manager/.env
+agentic-infra-manager/venv/
+agentic-infra-manager/modules/
