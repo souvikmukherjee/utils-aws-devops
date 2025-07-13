@@ -1,2 +1,0 @@
-[console_scripts]
-infra-agent = agentic_infra_manager.cli:main
