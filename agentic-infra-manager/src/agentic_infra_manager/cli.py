@@ -178,6 +178,14 @@ def analyze(ctx: click.Context, repository_url: str, target_env: str, region: Op
         if not dry_run and result.get('infrastructure_plan'):
             plan_id = result['infrastructure_plan']['plan_id']
             console.print(f"\n[bold]Next step:[/bold] infra-agent deploy --plan-id {plan_id}")
+        else:
+            console.print(f"\n[bold]Analysis completed![/bold]")
+            console.print(f"Repository: {repository_url}")
+            console.print(f"Target Environment: {target_env}")
+            console.print(f"Progress: {result.get('progress_percentage', 0):.1f}%")
+            
+            if result.get('errors'):
+                console.print(f"\n[red]⚠️  Please address the errors above before proceeding[/red]")
     
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
@@ -355,7 +363,7 @@ def version() -> None:
 
 # Display Functions
 
-def display_analysis_results(result: Dict[str, Any]) -> None:
+def display_analysis_results(result: Any) -> None:
     """Display repository analysis results."""
     console.print("\n[bold]📊 Repository Analysis Results[/bold]")
     
@@ -366,28 +374,40 @@ def display_analysis_results(result: Dict[str, Any]) -> None:
         table.add_column("Property", style="cyan")
         table.add_column("Value", style="green")
         
-        table.add_row("Name", repo_analysis['name'])
-        table.add_row("Language", repo_analysis['language'])
-        table.add_row("Framework", repo_analysis['framework'])
-        table.add_row("Application Type", repo_analysis['application_type'])
-        table.add_row("Dependencies", str(len(repo_analysis['dependencies'])))
-        table.add_row("Complexity Score", f"{repo_analysis['complexity_score']:.2f}")
+        table.add_row("Name", str(repo_analysis.get('name', 'N/A')))
+        table.add_row("Language", str(repo_analysis.get('language', 'N/A')))
+        table.add_row("Framework", str(repo_analysis.get('framework', 'N/A')))
+        table.add_row("Application Type", str(repo_analysis.get('application_type', 'N/A')))
+        
+        dependencies = repo_analysis.get('dependencies', [])
+        table.add_row("Dependencies", str(len(dependencies)) if dependencies else "0")
+        
+        complexity = repo_analysis.get('complexity_score', 0)
+        table.add_row("Complexity Score", f"{complexity:.2f}" if complexity else "N/A")
         
         console.print(table)
+    else:
+        console.print("[yellow]No repository analysis data available[/yellow]")
     
     # Infrastructure requirements
     infra_req = result.get('infrastructure_requirements')
     if infra_req:
         console.print("\n[bold]🏗️ Infrastructure Requirements[/bold]")
         
+        compute = infra_req.get('compute', {})
+        storage = infra_req.get('storage', {})
+        cost = infra_req.get('estimated_cost', 0)
+        
         requirements_panel = Panel.fit(
-            f"CPU: {infra_req['compute']['cpu']}\n"
-            f"Memory: {infra_req['compute']['memory']}\n"
-            f"Storage: {infra_req['storage']['size_gb']} GB\n"
-            f"Estimated Cost: ${infra_req['estimated_cost']:.2f}/month",
+            f"CPU: {compute.get('cpu', 'N/A')}\n"
+            f"Memory: {compute.get('memory', 'N/A')}\n"
+            f"Storage: {storage.get('size_gb', 'N/A')} GB\n"
+            f"Estimated Cost: ${cost:.2f}/month" if cost else "Estimated Cost: N/A",
             title="Resource Requirements"
         )
         console.print(requirements_panel)
+    else:
+        console.print("\n[yellow]No infrastructure requirements data available[/yellow]")
     
     # Progress
     progress = result.get('progress_percentage', 0)
@@ -406,6 +426,16 @@ def display_analysis_results(result: Dict[str, Any]) -> None:
         console.print(f"\n[yellow]⚠️ Warnings ({len(warnings)}):[/yellow]")
         for warning in warnings:
             console.print(f"  • {warning}")
+    
+    # Display current phase
+    current_phase = result.get('current_phase')
+    if current_phase:
+        console.print(f"\n[bold]Current Phase:[/bold] {current_phase}")
+    
+    # Show repository URL if available
+    repo_url = result.get('repository_url')
+    if repo_url:
+        console.print(f"[bold]Repository:[/bold] {repo_url}")
 
 
 def display_deployment_plan(plan: Dict[str, Any]) -> None:
@@ -468,7 +498,7 @@ def display_optimization_recommendations(recommendations: list) -> None:
         console.print(f"  {i}. {rec}")
 
 
-def save_analysis_results(result: Dict[str, Any], output_path: str) -> None:
+def save_analysis_results(result: Any, output_path: str) -> None:
     """Save analysis results to file."""
     output_file = Path(output_path)
     

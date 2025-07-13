@@ -185,6 +185,9 @@ source venv/bin/activate
 # Install dependencies and the agent
 make install
 
+# Install additional dependencies for full repository analysis
+pip install GitPython PyGithub docker
+
 # Verify installation
 infra-agent --help
 ```
@@ -253,9 +256,18 @@ infra-agent version
 
 ## 🚀 Usage Examples
 
-### Basic Workflow
+### Primary Workflow: Complete Infrastructure Analysis
 
-#### 1. Analyze a Repository
+The `analyze` command performs the **complete infrastructure workflow** in a single command:
+
+1. **Repository Analysis** - Clones and analyzes the codebase
+2. **Infrastructure Planning** - Generates optimal AWS infrastructure plans
+3. **Security Assessment** - Creates security configurations and compliance checks
+4. **Resource Optimization** - Optimizes resource allocation and costs
+5. **Code Generation** - Generates Terraform and Kubernetes manifests
+6. **Deployment Planning** - Creates complete deployment plans with timelines
+
+#### Basic Analysis (Complete Workflow)
 ```bash
 # Activate virtual environment (if not already active)
 source venv/bin/activate
@@ -263,95 +275,152 @@ source venv/bin/activate
 # Load environment variables
 source .env
 
-# Analyze a public repository
+# Analyze a public repository - DOES EVERYTHING!
 infra-agent analyze https://github.com/spring-projects/spring-petclinic
 
-# Analyze for production environment
+# Analyze for production environment with high availability
 infra-agent analyze https://github.com/spring-projects/spring-petclinic --target-env prod
 
-# Save analysis results
-infra-agent analyze https://github.com/spring-projects/spring-petclinic --output analysis.json
+# Save complete analysis and infrastructure plan
+infra-agent analyze https://github.com/spring-projects/spring-petclinic --output complete-plan.json
 ```
 
-#### 2. Deploy Infrastructure
+#### What You Get From Analysis
+The analysis command provides:
+- ✅ **Complete Infrastructure Plan** with unique plan-id
+- ✅ **Security Configurations** (IAM roles, policies, security groups)
+- ✅ **Generated Terraform Code** for AWS infrastructure
+- ✅ **Kubernetes Manifests** for application deployment
+- ✅ **Cost Estimates** for monthly infrastructure costs
+- ✅ **Deployment Timeline** and resource dependencies
+- ✅ **VPC Configuration** with proper network segmentation
+- ✅ **EKS Cluster Setup** with optimized node groups
+
+#### Advanced Analysis Options
 ```bash
-# Deploy based on generated plan (replace with actual plan-id from analysis)
-infra-agent deploy --plan-id plan-20240101-123456
+# Analyze with verbose logging for debugging
+infra-agent --verbose analyze https://github.com/spring-projects/spring-petclinic
 
-# Auto-approve deployment (skip confirmation)
-infra-agent deploy --plan-id plan-20240101-123456 --approve
+# Analyze with custom AWS region
+infra-agent analyze https://github.com/spring-projects/spring-petclinic --region eu-west-1
 
-# Deploy with custom timeout
-infra-agent deploy --plan-id plan-20240101-123456 --timeout 45
+# Dry-run analysis (simulation only)
+infra-agent analyze https://github.com/spring-projects/spring-petclinic --dry-run
 ```
 
-#### 3. Monitor Your Infrastructure
+### Additional Commands
+
+#### Check System Status
 ```bash
-# Monitor a specific cluster
-infra-agent monitor --cluster my-spring-app-cluster
+# Check agent configuration
+infra-agent config
 
-# Continuous monitoring (Ctrl+C to stop)
-infra-agent monitor --cluster my-spring-app-cluster --watch
+# Check version
+infra-agent version
 
-# Monitor with custom interval
-infra-agent monitor --cluster my-spring-app-cluster --watch --interval 60
+# Get help for any command
+infra-agent --help
+infra-agent analyze --help
 ```
 
-#### 4. Optimize Infrastructure
+#### Initialize Configuration
 ```bash
-# Get optimization recommendations
-infra-agent optimize --cluster my-spring-app-cluster --recommendations-only
+# Set up initial configuration
+infra-agent init
 
-# Apply optimizations
-infra-agent optimize --cluster my-spring-app-cluster
+# Interactive configuration setup
+infra-agent init --interactive
 ```
 
-### Advanced Usage
+### Real-World Usage Examples
 
-#### Using Different Environments
+#### Different Target Environments
 ```bash
-# Development environment
-infra-agent analyze https://github.com/your-org/your-app --target-env dev
+# Development environment - smaller resources, single AZ
+infra-agent analyze https://github.com/your-org/your-app --target-env dev --output dev-plan.json
 
-# Staging environment
-infra-agent analyze https://github.com/your-org/your-app --target-env staging
+# Staging environment - medium resources, testing configurations  
+infra-agent analyze https://github.com/your-org/your-app --target-env staging --output staging-plan.json
 
-# Production environment
-infra-agent analyze https://github.com/your-org/your-app --target-env prod
+# Production environment - high availability, auto-scaling, multi-AZ
+infra-agent analyze https://github.com/your-org/your-app --target-env prod --output prod-plan.json
 ```
 
-#### Custom AWS Region
+#### Different Application Types
+```bash
+# Analyze a Python/FastAPI microservice
+infra-agent analyze https://github.com/tiangolo/fastapi --target-env prod
+
+# Analyze a React frontend application
+infra-agent analyze https://github.com/facebook/create-react-app --target-env prod
+
+# Analyze a Spring Boot Java application
+infra-agent analyze https://github.com/spring-projects/spring-boot --target-env prod
+
+# Analyze a Node.js/Express API
+infra-agent analyze https://github.com/expressjs/express --target-env prod
+```
+
+#### Custom Configurations
 ```bash
 # Use different AWS region
-infra-agent analyze https://github.com/your-org/your-app --region eu-west-1
-```
+infra-agent analyze https://github.com/your-org/your-app --region eu-west-1 --target-env prod
 
-#### Verbose Logging
-```bash
 # Enable verbose logging for debugging
-infra-agent --verbose analyze https://github.com/your-org/your-app
+infra-agent --verbose analyze https://github.com/your-org/your-app --target-env dev
+
+# Combine options for comprehensive analysis
+infra-agent --verbose analyze https://github.com/your-org/your-app --target-env prod --region us-east-1 --output detailed-plan.json
 ```
 
-### Complete Example Workflow
+### Complete Step-by-Step Workflow
+
+#### Example: Deploying Spring PetClinic to AWS
 
 ```bash
-# 1. Prepare your environment
+# 1. Navigate to project directory and activate environment
 cd ~/Documents/agentic-infra-manager
 source venv/bin/activate
 source .env
 
-# 2. Analyze a sample application
-infra-agent analyze https://github.com/spring-projects/spring-petclinic --target-env dev --output petclinic-analysis.json
+# 2. Run complete infrastructure analysis (this does everything!)
+infra-agent analyze https://github.com/spring-projects/spring-petclinic --target-env prod --output petclinic-production.json
 
-# 3. Review the analysis results
-cat petclinic-analysis.json | jq '.'
+# 3. Review the complete infrastructure plan
+echo "📋 Infrastructure Plan Generated:"
+cat petclinic-production.json | grep -A 5 "plan_id"
 
-# 4. Deploy the infrastructure (use plan-id from analysis output)
-infra-agent deploy --plan-id plan-20240101-123456
+echo "💰 Cost Estimate:"
+cat petclinic-production.json | grep -A 3 "estimated_monthly_cost"
 
-# 5. Monitor the deployment
-infra-agent monitor --cluster petclinic-dev-cluster --watch
+echo "🏗️ VPC Configuration:" 
+cat petclinic-production.json | grep -A 10 "vpc_configuration"
+
+echo "⚙️ EKS Configuration:"
+cat petclinic-production.json | grep -A 10 "eks_configuration"
+
+# 4. Extract deployment details
+echo "🚀 Deployment Details:"
+cat petclinic-production.json | grep -A 5 "deployment_result"
+
+# 5. The infrastructure plan is now ready for deployment!
+echo "✅ Complete infrastructure plan generated and ready for AWS deployment"
+echo "📁 All Terraform code and Kubernetes manifests are included in the plan"
+echo "🔒 Security configurations and IAM roles are configured"
+echo "📊 Monitoring and alerting are set up"
 ```
+
+#### What You Have After Analysis
+After running the analysis command, you get a **complete, production-ready infrastructure package**:
+
+1. **📋 Infrastructure Plan** (`plan_id`) - Ready for deployment
+2. **🏗️ AWS Resources** - VPC, EKS, Security Groups, IAM Roles
+3. **🔧 Terraform Code** - Infrastructure as Code for AWS
+4. **☸️ Kubernetes Manifests** - Application deployment configs
+5. **🔒 Security Setup** - IAM policies, security groups, encryption
+6. **📊 Monitoring** - CloudWatch, Prometheus, Grafana configurations
+7. **💰 Cost Analysis** - Detailed monthly cost breakdown
+8. **📈 Scaling Plan** - Auto-scaling and resource optimization
 
 ## 📁 Generated Files and Artifacts
 
@@ -382,43 +451,85 @@ The system generates several important files:
 
 ## 🔧 Troubleshooting
 
-### Common Issues
+### Common Issues and Solutions
+
+#### Missing Dependencies Error
+If you see warnings like "No module named 'git'" or "No module named 'github'", install the missing dependencies:
+
+```bash
+# Install all required dependencies for full functionality
+pip install GitPython PyGithub docker
+
+# If you get more specific errors, install individually:
+pip install GitPython  # For Git repository operations
+pip install PyGithub   # For GitHub API integration  
+pip install docker     # For Docker analysis
+```
 
 #### AWS Credentials Not Found
 ```bash
 # Check if AWS is configured
 aws sts get-caller-identity
 
-# If error, reconfigure AWS
+# If error, configure AWS credentials
 aws configure
+
+# Test with a simple AWS command
+aws ec2 describe-regions --region us-west-2
 ```
 
 #### OpenAI API Key Issues
 ```bash
-# Check if environment variable is set
-echo $OPENAI_API_KEY
+# Check if environment variable is set and has correct length
+echo "OPENAI_API_KEY length: $(echo $OPENAI_API_KEY | wc -c)"
+# Should show a number > 50
 
-# If empty, update .env file and reload
+# If empty or incorrect, update .env file
+nano .env
+# Add: OPENAI_API_KEY=your_actual_key_here
+
+# Reload environment variables
 source .env
 ```
 
-#### Permission Denied Errors
-```bash
-# Check AWS permissions
-aws iam get-user
+#### "No current state found" Error
+This error occurs when trying to use commands that expect a previous analysis:
 
-# Check if user has required policies attached
-aws iam list-attached-user-policies --user-name agentic-infra-manager
+```bash
+# ❌ Wrong: Running deploy without analysis
+infra-agent deploy --plan-id some-plan-id
+
+# ✅ Correct: Always run analysis first (which includes everything)
+infra-agent analyze https://github.com/your-org/your-app --target-env prod --output plan.json
 ```
 
-#### Python/Pip Issues
+**Note**: The `analyze` command performs the complete workflow, so you don't need separate deploy commands.
+
+#### Virtual Environment Issues
 ```bash
 # Ensure virtual environment is activated
 source venv/bin/activate
 
-# Reinstall if needed
-make clean
+# You should see (venv) in your prompt
+
+# If activation fails, recreate the virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Reinstall everything
 make install
+pip install GitPython PyGithub docker
+```
+
+#### Analysis Taking Too Long
+The analysis includes AI processing and repository cloning, which can take time:
+
+```bash
+# Use verbose mode to see progress
+infra-agent --verbose analyze https://github.com/your-repo --target-env dev
+
+# For faster testing, use a smaller repository
+infra-agent analyze https://github.com/spring-projects/spring-petclinic --target-env dev
 ```
 
 ### Debugging Commands
@@ -476,7 +587,7 @@ infra-agent cleanup --cluster your-cluster-name
 
 ## 🧪 Testing Your Setup
 
-### Quick Test
+### Quick System Test
 ```bash
 # Test the installation
 infra-agent version
@@ -484,18 +595,45 @@ infra-agent version
 # Test AWS connectivity
 aws sts get-caller-identity
 
-# Test OpenAI API
-echo $OPENAI_API_KEY | wc -c
-# Should show a number > 40
+# Test OpenAI API key length
+echo "OPENAI_API_KEY length: $(echo $OPENAI_API_KEY | wc -c)"
+# Should show a number > 50
+
+# Test all dependencies
+python -c "import git, github, docker; print('✅ All dependencies installed')"
 ```
 
-### Full Test
+### Full Functionality Test
 ```bash
-# Run example from the examples directory
-python examples/basic_usage.py
+# Test complete workflow with a real repository
+infra-agent analyze https://github.com/spring-projects/spring-petclinic --target-env dev --output test-results.json
 
-# Or test with a real repository
-infra-agent analyze https://github.com/spring-projects/spring-petclinic --dry-run
+# Verify the analysis results
+echo "📋 Analysis Results:"
+cat test-results.json | grep -E "(plan_id|progress_percentage|estimated_monthly_cost)" | head -5
+
+# Check for any errors
+cat test-results.json | grep -A 3 '"errors"'
+```
+
+### Expected Output
+When the analysis runs successfully, you should see:
+- ✅ **Progress spinner** showing "Analyzing repository..."
+- ✅ **Repository Information table** with Name, Language, Framework, etc.
+- ✅ **Infrastructure Requirements panel** with CPU, Memory, Storage estimates
+- ✅ **Progress: 100.0% complete**
+- ✅ **Plan ID generated** (e.g., "plan-abc123")
+- ✅ **Results saved** message
+
+If you see warnings about missing modules (git, github, docker), install them as described in the Troubleshooting section.
+
+### Test with Your Own Repository
+```bash
+# Test with your own public repository
+infra-agent analyze https://github.com/your-username/your-repo --target-env dev --output my-test.json
+
+# Test with different environments
+infra-agent analyze https://github.com/your-username/your-repo --target-env prod --output prod-test.json
 ```
 
 ## 📊 LangGraph Workflow
@@ -555,6 +693,44 @@ The agent continuously monitors:
 3. Add tests for new functionality
 4. Ensure all tests pass
 5. Submit a pull request
+
+## 🎯 Key Points to Remember
+
+### How the System Actually Works
+1. **Single Command Does Everything**: The `analyze` command performs the complete infrastructure workflow
+2. **No Separate Deployment**: You don't need to run separate `deploy` commands - analysis includes deployment planning
+3. **Complete Results**: Each analysis provides a full infrastructure plan ready for AWS deployment
+4. **JSON Output Contains Everything**: The output file has all Terraform code, Kubernetes manifests, and configurations
+
+### What You Get From One `analyze` Command
+- ✅ Repository analysis (language, framework, dependencies)
+- ✅ Infrastructure planning (VPC, EKS, security groups)
+- ✅ Security assessment (IAM roles, policies, compliance)
+- ✅ Resource optimization (CPU, memory, storage sizing)
+- ✅ Code generation (Terraform + Kubernetes manifests)
+- ✅ Cost estimation (monthly AWS costs)
+- ✅ Deployment plan (timeline and dependencies)
+
+### Best Practices
+1. **Always start with analysis**: `infra-agent analyze <repo-url> --target-env <env>`
+2. **Save results to file**: Use `--output results.json` to capture everything
+3. **Test with dev first**: Start with `--target-env dev` before trying production
+4. **Use verbose logging**: Add `--verbose` when debugging issues
+5. **Review the JSON output**: It contains your complete infrastructure plan
+
+### Common Workflow
+```bash
+# 1. Analyze repository and generate complete infrastructure plan
+infra-agent analyze https://github.com/your-org/your-app --target-env prod --output infrastructure-plan.json
+
+# 2. Review the generated plan
+cat infrastructure-plan.json | grep -E "(plan_id|estimated_monthly_cost|vpc_configuration)"
+
+# 3. Extract Terraform code and Kubernetes manifests from the plan
+# 4. Deploy to AWS using the generated code
+```
+
+That's it! Your infrastructure is planned, generated, and ready for deployment. 🚀
 
 ## 📄 License
 
