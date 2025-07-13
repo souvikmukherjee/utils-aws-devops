@@ -343,76 +343,19 @@ class InfrastructureAgent:
         try:
             updated_state = update_state_phase(state, DeploymentPhase.INFRASTRUCTURE_PLANNING)
             
-            # TODO: Implement actual requirements assessment
-            # This would include:
-            # - Resource sizing calculations
-            # - Network architecture planning
-            # - Storage requirements analysis
-            # - Scaling strategy determination
+            # Use actual infrastructure planner
+            from ..modules.infrastructure_planner import InfrastructurePlanner
+            planner = InfrastructurePlanner(self.config)
             
-            # Use LLM for intelligent decision making
-            analysis = state["repository_analysis"]
-            if analysis:
-                prompt = f"""
-                Based on this application analysis:
-                - Language: {analysis['language']}
-                - Framework: {analysis['framework']}
-                - Dependencies: {analysis['dependencies']}
-                - Application Type: {analysis['application_type']}
-                
-                Recommend AWS infrastructure requirements including:
-                1. Compute resources (EC2 instance types, CPU, memory)
-                2. Storage requirements (EBS, EFS, S3)
-                3. Networking setup (VPC, subnets, load balancers)
-                4. Security configurations
-                5. Monitoring and logging setup
-                
-                Provide recommendations as structured data.
-                """
-                
-                messages = [
-                    SystemMessage(content="You are an AWS infrastructure expert."),
-                    HumanMessage(content=prompt)
-                ]
-                
-                response = await self.llm.ainvoke(messages)
-                
-                # TODO: Parse LLM response and structure requirements
-                mock_requirements = {
-                    "compute": {
-                        "instance_type": "t3.medium",
-                        "min_instances": 2,
-                        "max_instances": 10,
-                        "cpu_requests": "500m",
-                        "memory_requests": "512Mi"
-                    },
-                    "storage": {
-                        "ebs_volume_size": 20,
-                        "ebs_volume_type": "gp3",
-                        "backup_enabled": True
-                    },
-                    "networking": {
-                        "vpc_cidr": "10.0.0.0/16",
-                        "public_subnets": 2,
-                        "private_subnets": 2,
-                        "load_balancer_type": "application"
-                    },
-                    "security": {
-                        "encryption_at_rest": True,
-                        "encryption_in_transit": True,
-                        "iam_roles_required": True
-                    },
-                    "monitoring": {
-                        "cloudwatch_enabled": True,
-                        "prometheus_enabled": True,
-                        "log_retention_days": 30
-                    },
-                    "estimated_cost": 200.0,
-                    "compliance_requirements": ["SOC2", "GDPR"]
-                }
-                
-                updated_state["infrastructure_requirements"] = mock_requirements
+            # Create infrastructure plan using actual planner
+            infrastructure_plan = await planner.create_infrastructure_plan(
+                repository_analysis=state["repository_analysis"],
+                security_config=state.get("security_assessment", {}),
+                target_environment=state.get("target_environment", "dev"),
+                user_requirements=state.get("user_requirements", {})
+            )
             
+            updated_state["infrastructure_plan"] = infrastructure_plan
             updated_state = update_progress(updated_state, "infrastructure_planning", 20.0)
             
             self.logger.info("Infrastructure requirements assessment completed")
@@ -479,12 +422,44 @@ class InfrastructureAgent:
         try:
             updated_state = update_state_phase(state, DeploymentPhase.TOPOLOGY_GENERATION)
             
-            # TODO: Implement actual topology generation with diagrams
-            # This would create visual representations of the infrastructure
+            # Use actual infrastructure visualizer with graceful error handling
+            try:
+                from ..modules.visualization import InfrastructureVisualizer
+                if InfrastructureVisualizer is None:
+                    raise ImportError("InfrastructureVisualizer is not available")
+                    
+                visualizer = InfrastructureVisualizer(self.config)
+                
+                # Generate all infrastructure diagrams
+                diagram_results = await visualizer.generate_all_diagrams(
+                    repository_analysis=state["repository_analysis"],
+                    infrastructure_plan=state["infrastructure_plan"],
+                    security_config=state.get("security_assessment", {})
+                )
+                
+                # Create summary report
+                if diagram_results:
+                    report_path = await visualizer.create_summary_report(
+                        diagram_results, 
+                        state["infrastructure_plan"]
+                    )
+                    updated_state["topology_diagrams"] = {
+                        "diagrams": diagram_results,
+                        "summary_report": report_path
+                    }
+                
+                self.logger.info("Infrastructure topology generation completed successfully")
+                
+            except ImportError as e:
+                self.logger.warning(f"Skipping topology generation due to import error: {e}")
+                updated_state["topology_diagrams"] = {
+                    "diagrams": [],
+                    "summary_report": None,
+                    "skipped_reason": f"Import error: {e}"
+                }
             
             updated_state = update_progress(updated_state, "topology_generation", 10.0)
             
-            self.logger.info("Infrastructure topology generation completed")
             return updated_state
             
         except Exception as e:
@@ -523,24 +498,27 @@ class InfrastructureAgent:
         try:
             updated_state = update_state_phase(state, DeploymentPhase.CODE_GENERATION)
             
-            # TODO: Implement actual IaC code generation
-            mock_plan = {
-                "plan_id": f"plan-{state['session_id'][:8]}",
-                "vpc_configuration": {"cidr": "10.0.0.0/16"},
-                "eks_configuration": {"version": "1.28"},
-                "compute_resources": [],
-                "storage_resources": [],
-                "networking_config": {},
-                "security_config": state["security_assessment"],
-                "monitoring_config": {},
-                "estimated_cost": {"monthly": 200.0},
-                "deployment_timeline": {"estimated_duration": "30 minutes"},
-                "terraform_code": "# Terraform code would be generated here",
-                "cdk_code": None,
-                "k8s_manifests": ["# Kubernetes manifests would be generated here"]
-            }
+            # Use actual IaC generator
+            from ..modules.iac_generator import IaCGenerator, IaCFramework
+            generator = IaCGenerator(self.config)
             
-            updated_state["infrastructure_plan"] = mock_plan
+            # Generate infrastructure code
+            generation_result = await generator.generate_infrastructure_code(
+                infrastructure_plan=state["infrastructure_plan"],
+                security_config=state.get("security_assessment", {}),
+                repository_analysis=state["repository_analysis"],
+                framework=IaCFramework.TERRAFORM,
+                environment=state.get("target_environment", "dev")
+            )
+            
+            # Update infrastructure plan with generated code paths
+            infrastructure_plan = state["infrastructure_plan"]
+            infrastructure_plan["terraform_code"] = generation_result.output_files
+            infrastructure_plan["generated_files"] = generation_result.output_files
+            infrastructure_plan["modules"] = generation_result.modules
+            
+            updated_state["infrastructure_plan"] = infrastructure_plan
+            updated_state["code_generation_result"] = generation_result
             updated_state = update_progress(updated_state, "code_generation", 15.0)
             
             self.logger.info("Infrastructure code generation completed")
@@ -663,7 +641,7 @@ class InfrastructureAgent:
         """Route after requirements assessment."""
         if state.get("errors"):
             return "error"
-        if state.get("infrastructure_requirements"):
+        if state.get("infrastructure_plan"):
             return "plan_security"
         return "error"
     

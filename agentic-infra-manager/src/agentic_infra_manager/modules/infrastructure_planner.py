@@ -383,9 +383,22 @@ class InfrastructurePlanner:
         }
         vpc_cidr = user_requirements.get('vpc_cidr', vpc_cidrs.get(target_environment, '10.0.0.0/16'))
         
-        # Get available AZs
-        az_response = self.ec2_client.describe_availability_zones()
-        available_azs = [az['ZoneName'] for az in az_response['AvailabilityZones']]
+        # Get available AZs with fallback
+        available_azs = []
+        try:
+            az_response = self.ec2_client.describe_availability_zones()
+            available_azs = [az['ZoneName'] for az in az_response['AvailabilityZones']]
+        except Exception as e:
+            self.logger.warning(f"Failed to get availability zones from AWS API: {e}")
+            # Use fallback AZs based on common AWS regions
+            region_azs = {
+                'us-east-1': ['us-east-1a', 'us-east-1b', 'us-east-1c'],
+                'us-west-2': ['us-west-2a', 'us-west-2b', 'us-west-2c'],
+                'eu-west-1': ['eu-west-1a', 'eu-west-1b', 'eu-west-1c'],
+                'ap-southeast-1': ['ap-southeast-1a', 'ap-southeast-1b', 'ap-southeast-1c']
+            }
+            available_azs = region_azs.get(self.config.aws.region, 
+                                           [f"{self.config.aws.region}a", f"{self.config.aws.region}b", f"{self.config.aws.region}c"])
         
         # Select AZs based on environment
         if target_environment == 'prod':

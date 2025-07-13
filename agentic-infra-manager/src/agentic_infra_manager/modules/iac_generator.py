@@ -132,7 +132,7 @@ class TerraformGenerator:
         # Provider configuration
         provider_tf = self._generate_provider_tf(iac_config)
         provider_file = output_dir / "provider.tf"
-        with open(provider_tf, 'w') as f:
+        with open(provider_file, 'w') as f:
             f.write(provider_tf)
         generated_files.append(str(provider_file))
         

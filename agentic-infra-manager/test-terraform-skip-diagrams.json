@@ -1,0 +1,417 @@
+{
+  "session_id": "845e88cf-fe38-4b6e-8c2c-8c0202e7c7cd",
+  "agent_version": "0.1.0",
+  "created_at": "2025-07-13 15:14:40.795039",
+  "last_updated": "2025-07-13 15:14:42.492071",
+  "current_phase": "DeploymentPhase.FAILED",
+  "repository_url": "https://github.com/spring-projects/spring-petclinic",
+  "target_environment": "dev",
+  "deployment_region": "ap-southeast-2",
+  "user_requirements": {},
+  "repository_analysis": {
+    "url": "https://github.com/spring-projects/spring-petclinic",
+    "name": "sample-app",
+    "language": "python",
+    "framework": "fastapi",
+    "dependencies": [
+      "fastapi",
+      "uvicorn",
+      "sqlalchemy"
+    ],
+    "application_type": "api_service",
+    "dockerfile_present": true,
+    "k8s_manifests_present": false,
+    "infrastructure_requirements": {
+      "compute": {
+        "cpu": "500m",
+        "memory": "512Mi"
+      },
+      "storage": {
+        "persistent": false,
+        "size_gb": 20
+      },
+      "networking": {
+        "load_balancer": true
+      },
+      "security": {
+        "https": true,
+        "authentication": true
+      },
+      "monitoring": {
+        "metrics": true,
+        "logging": true
+      },
+      "estimated_cost": 150.0,
+      "compliance_requirements": [
+        "SOC2"
+      ]
+    },
+    "security_analysis": {
+      "vulnerabilities": []
+    },
+    "complexity_score": 0.6,
+    "estimated_resources": {
+      "instances": 2,
+      "storage_gb": 20
+    }
+  },
+  "infrastructure_requirements": null,
+  "security_assessment": {
+    "iam_roles": [
+      {
+        "name": "agent-eks-cluster-role",
+        "type": "service",
+        "policies": [
+          "AmazonEKSClusterPolicy"
+        ]
+      },
+      {
+        "name": "agent-node-group-role",
+        "type": "service",
+        "policies": [
+          "AmazonEKSWorkerNodePolicy",
+          "AmazonEKS_CNI_Policy",
+          "AmazonEC2ContainerRegistryReadOnly"
+        ]
+      }
+    ],
+    "policies": [],
+    "security_groups": [
+      {
+        "name": "eks-cluster-sg",
+        "rules": [
+          {
+            "type": "ingress",
+            "port": 443,
+            "source": "0.0.0.0/0"
+          }
+        ]
+      }
+    ],
+    "network_acls": [],
+    "encryption_config": {
+      "ebs_encryption": true,
+      "s3_encryption": true,
+      "secrets_encryption": true
+    },
+    "compliance_controls": [
+      "SOC2",
+      "GDPR"
+    ],
+    "vulnerability_scan_results": null
+  },
+  "infrastructure_plan": {
+    "plan_id": "plan-20250713-151442",
+    "vpc_configuration": "NetworkTopology(vpc_cidr='10.0.0.0/16', availability_zones=['ap-southeast-2a', 'ap-southeast-2b'], public_subnets=[{'cidr': '10.0.0.0/24', 'availability_zone': 'ap-southeast-2a', 'map_public_ip_on_launch': True, 'name': 'public-subnet-1'}, {'cidr': '10.0.1.0/24', 'availability_zone': 'ap-southeast-2b', 'map_public_ip_on_launch': True, 'name': 'public-subnet-2'}], private_subnets=[{'cidr': '10.0.10.0/24', 'availability_zone': 'ap-southeast-2a', 'map_public_ip_on_launch': False, 'name': 'private-subnet-1'}, {'cidr': '10.0.11.0/24', 'availability_zone': 'ap-southeast-2b', 'map_public_ip_on_launch': False, 'name': 'private-subnet-2'}], nat_gateways=1, internet_gateway=True, vpc_endpoints=['s3', 'ecr.api', 'ecr.dkr', 'logs'], route_tables=[{'name': 'public-route-table', 'subnet_type': 'public', 'routes': [{'destination': '0.0.0.0/0', 'target': 'internet_gateway'}]}, {'name': 'private-route-table', 'subnet_type': 'private', 'routes': [{'destination': '0.0.0.0/0', 'target': 'nat_gateway'}]}])",
+    "eks_configuration": {
+      "cluster_name": "eks-dev-cluster",
+      "version": "1.28",
+      "role_arn": "arn:aws:iam::427793686436:role/eks-cluster-role",
+      "node_groups": [
+        {
+          "name": "system-nodes",
+          "instance_types": [
+            "t3.medium"
+          ],
+          "scaling_config": {
+            "min_size": 1,
+            "max_size": 3,
+            "desired_size": 2
+          },
+          "ami_type": "AL2_x86_64",
+          "capacity_type": "ON_DEMAND",
+          "disk_size": 20,
+          "labels": {
+            "node-type": "system"
+          },
+          "taints": [
+            {
+              "key": "node-type",
+              "value": "system",
+              "effect": "NO_SCHEDULE"
+            }
+          ]
+        },
+        {
+          "name": "app-nodes",
+          "instance_types": [
+            "t3.medium",
+            "t3.large"
+          ],
+          "scaling_config": {
+            "min_size": 1,
+            "max_size": 5,
+            "desired_size": 1
+          },
+          "ami_type": "AL2_x86_64",
+          "capacity_type": "ON_DEMAND",
+          "disk_size": 50,
+          "labels": {
+            "node-type": "application"
+          }
+        },
+        {
+          "name": "spot-nodes",
+          "instance_types": [
+            "t3.medium",
+            "t3.large",
+            "m5.large"
+          ],
+          "scaling_config": {
+            "min_size": 0,
+            "max_size": 5,
+            "desired_size": 1
+          },
+          "ami_type": "AL2_x86_64",
+          "capacity_type": "SPOT",
+          "disk_size": 50,
+          "labels": {
+            "node-type": "spot"
+          }
+        }
+      ],
+      "addons": [
+        {
+          "name": "vpc-cni",
+          "version": "latest",
+          "resolve_conflicts": "OVERWRITE"
+        },
+        {
+          "name": "kube-proxy",
+          "version": "latest",
+          "resolve_conflicts": "OVERWRITE"
+        },
+        {
+          "name": "coredns",
+          "version": "latest",
+          "resolve_conflicts": "OVERWRITE"
+        }
+      ],
+      "logging": {
+        "enable": false,
+        "types": [
+          "api",
+          "audit",
+          "authenticator",
+          "controllerManager",
+          "scheduler"
+        ]
+      },
+      "endpoint_config": {
+        "private_access": true,
+        "public_access": true,
+        "public_access_cidrs": [
+          "0.0.0.0/0"
+        ]
+      },
+      "encryption_config": {
+        "resources": [
+          "secrets"
+        ],
+        "provider": {
+          "key_id": "alias/eks-cluster-key"
+        }
+      }
+    },
+    "compute_resources": "ComputeConfiguration(instance_types=['t3.micro', 't3.small', 't3.medium'], min_instances=1, max_instances=3, desired_instances=1, auto_scaling_enabled=True, spot_instances_enabled=True, spot_percentage=50)",
+    "storage_resources": [
+      "StorageConfiguration(storage_type='ebs', size_gb=20, iops=None, throughput=None, encryption_enabled=True, backup_enabled=False, retention_days=7)"
+    ],
+    "database_resources": null,
+    "networking_config": "NetworkTopology(vpc_cidr='10.0.0.0/16', availability_zones=['ap-southeast-2a', 'ap-southeast-2b'], public_subnets=[{'cidr': '10.0.0.0/24', 'availability_zone': 'ap-southeast-2a', 'map_public_ip_on_launch': True, 'name': 'public-subnet-1'}, {'cidr': '10.0.1.0/24', 'availability_zone': 'ap-southeast-2b', 'map_public_ip_on_launch': True, 'name': 'public-subnet-2'}], private_subnets=[{'cidr': '10.0.10.0/24', 'availability_zone': 'ap-southeast-2a', 'map_public_ip_on_launch': False, 'name': 'private-subnet-1'}, {'cidr': '10.0.11.0/24', 'availability_zone': 'ap-southeast-2b', 'map_public_ip_on_launch': False, 'name': 'private-subnet-2'}], nat_gateways=1, internet_gateway=True, vpc_endpoints=['s3', 'ecr.api', 'ecr.dkr', 'logs'], route_tables=[{'name': 'public-route-table', 'subnet_type': 'public', 'routes': [{'destination': '0.0.0.0/0', 'target': 'internet_gateway'}]}, {'name': 'private-route-table', 'subnet_type': 'private', 'routes': [{'destination': '0.0.0.0/0', 'target': 'nat_gateway'}]}])",
+    "security_config": null,
+    "monitoring_config": {
+      "cloudwatch": {
+        "enabled": true,
+        "log_groups": [
+          "/aws/eks/dev/cluster",
+          "/aws/lambda/dev",
+          "/aws/apigateway/dev"
+        ],
+        "metrics": {
+          "namespace": "EKS/dev",
+          "detailed_monitoring": false
+        }
+      },
+      "prometheus": {
+        "enabled": false,
+        "namespace": "prometheus",
+        "storage_size": "50Gi",
+        "retention": "30d"
+      },
+      "grafana": {
+        "enabled": false,
+        "namespace": "grafana",
+        "admin_password": "random_generated",
+        "persistence": {
+          "enabled": true,
+          "size": "10Gi"
+        }
+      },
+      "alertmanager": {
+        "enabled": false,
+        "namespace": "alertmanager",
+        "slack_webhook": null,
+        "email_config": null
+      }
+    },
+    "deployment_strategy": "rolling",
+    "estimated_cost": {
+      "monthly": 167.24,
+      "breakdown": {
+        "eks_cluster": 72.0,
+        "compute": 7.54,
+        "storage": 2.0,
+        "database": 0.0,
+        "networking": 65.7,
+        "monitoring": 20.0
+      },
+      "currency": "USD",
+      "estimated_on": "2025-07-13T15:14:42.480988"
+    },
+    "deployment_timeline": {
+      "estimated_duration": "45 minutes",
+      "phases": [
+        {
+          "name": "Network Setup",
+          "duration": "10 minutes",
+          "description": "Create VPC, subnets, route tables"
+        },
+        {
+          "name": "Security Setup",
+          "duration": "5 minutes",
+          "description": "Create security groups, IAM roles"
+        },
+        {
+          "name": "EKS Cluster Creation",
+          "duration": "15 minutes",
+          "description": "Create EKS cluster and node groups"
+        },
+        {
+          "name": "Storage Setup",
+          "duration": "5 minutes",
+          "description": "Create EBS volumes, S3 buckets"
+        },
+        {
+          "name": "Application Deployment",
+          "duration": "10 minutes",
+          "description": "Deploy applications to Kubernetes"
+        }
+      ]
+    },
+    "terraform_code": null,
+    "cdk_code": null,
+    "k8s_manifests": []
+  },
+  "deployment_strategy": null,
+  "optimization_recommendations": [
+    "Use spot instances for non-critical workloads",
+    "Enable cluster autoscaler for dynamic scaling",
+    "Implement horizontal pod autoscaling",
+    "Use reserved instances for baseline capacity"
+  ],
+  "deployment_result": null,
+  "monitoring_data": null,
+  "decision_history": [],
+  "current_decisions": {},
+  "confidence_scores": {},
+  "errors": [
+    "Code generation failed: cannot import name 'CloudWatch' from 'diagrams.aws.management' (/Users/souvikmukherjee/Documents/02.Work/05.NAB/03.Code/utils-aws-devops/agentic-infra-manager/venv/lib/python3.13/site-packages/diagrams/aws/management.py)"
+  ],
+  "warnings": [],
+  "rollback_required": false,
+  "progress_percentage": 75.0,
+  "completed_steps": [
+    "repository_analysis",
+    "infrastructure_planning",
+    "security_assessment",
+    "topology_generation",
+    "resource_optimization"
+  ],
+  "pending_steps": [
+    "deployment"
+  ],
+  "created_resources": [],
+  "resource_dependencies": {},
+  "cleanup_required": [],
+  "estimated_monthly_cost": 0.0,
+  "actual_costs": {},
+  "budget_alerts": [],
+  "compliance_status": {},
+  "security_violations": [],
+  "audit_trail": [
+    {
+      "timestamp": "2025-07-13 15:14:40.795039",
+      "action": "session_initialized",
+      "details": {
+        "session_id": "845e88cf-fe38-4b6e-8c2c-8c0202e7c7cd",
+        "repository_url": "https://github.com/spring-projects/spring-petclinic",
+        "target_environment": "dev"
+      }
+    },
+    {
+      "timestamp": "2025-07-13 15:14:40.796639",
+      "action": "phase_transition",
+      "details": {
+        "previous_phase": "DeploymentPhase.INITIALIZATION",
+        "new_phase": "DeploymentPhase.REPOSITORY_ANALYSIS"
+      }
+    },
+    {
+      "timestamp": "2025-07-13 15:14:41.256998",
+      "action": "phase_transition",
+      "details": {
+        "previous_phase": "DeploymentPhase.REPOSITORY_ANALYSIS",
+        "new_phase": "DeploymentPhase.INFRASTRUCTURE_PLANNING"
+      }
+    },
+    {
+      "timestamp": "2025-07-13 15:14:42.484746",
+      "action": "phase_transition",
+      "details": {
+        "previous_phase": "DeploymentPhase.INFRASTRUCTURE_PLANNING",
+        "new_phase": "DeploymentPhase.SECURITY_ASSESSMENT"
+      }
+    },
+    {
+      "timestamp": "2025-07-13 15:14:42.485939",
+      "action": "phase_transition",
+      "details": {
+        "previous_phase": "DeploymentPhase.SECURITY_ASSESSMENT",
+        "new_phase": "DeploymentPhase.TOPOLOGY_GENERATION"
+      }
+    },
+    {
+      "timestamp": "2025-07-13 15:14:42.488671",
+      "action": "phase_transition",
+      "details": {
+        "previous_phase": "DeploymentPhase.TOPOLOGY_GENERATION",
+        "new_phase": "DeploymentPhase.RESOURCE_OPTIMIZATION"
+      }
+    },
+    {
+      "timestamp": "2025-07-13 15:14:42.489816",
+      "action": "phase_transition",
+      "details": {
+        "previous_phase": "DeploymentPhase.RESOURCE_OPTIMIZATION",
+        "new_phase": "DeploymentPhase.CODE_GENERATION"
+      }
+    },
+    {
+      "timestamp": "2025-07-13 15:14:42.490959",
+      "action": "error_occurred",
+      "details": {
+        "error_message": "Code generation failed: cannot import name 'CloudWatch' from 'diagrams.aws.management' (/Users/souvikmukherjee/Documents/02.Work/05.NAB/03.Code/utils-aws-devops/agentic-infra-manager/venv/lib/python3.13/site-packages/diagrams/aws/management.py)",
+        "error_details": {}
+      }
+    },
+    {
+      "timestamp": "2025-07-13 15:14:42.492074",
+      "action": "phase_transition",
+      "details": {
+        "previous_phase": "DeploymentPhase.RESOURCE_OPTIMIZATION",
+        "new_phase": "DeploymentPhase.FAILED"
+      }
+    }
+  ]
+}

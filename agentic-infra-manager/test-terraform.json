@@ -1,0 +1,134 @@
+{
+  "session_id": "b183ee4a-e297-472f-b88a-9645393cc7a4",
+  "agent_version": "0.1.0",
+  "created_at": "2025-07-13 15:11:26.557354",
+  "last_updated": "2025-07-13 15:11:27.249805",
+  "current_phase": "DeploymentPhase.FAILED",
+  "repository_url": "https://github.com/spring-projects/spring-petclinic",
+  "target_environment": "dev",
+  "deployment_region": "ap-southeast-2",
+  "user_requirements": {},
+  "repository_analysis": {
+    "url": "https://github.com/spring-projects/spring-petclinic",
+    "name": "sample-app",
+    "language": "python",
+    "framework": "fastapi",
+    "dependencies": [
+      "fastapi",
+      "uvicorn",
+      "sqlalchemy"
+    ],
+    "application_type": "api_service",
+    "dockerfile_present": true,
+    "k8s_manifests_present": false,
+    "infrastructure_requirements": {
+      "compute": {
+        "cpu": "500m",
+        "memory": "512Mi"
+      },
+      "storage": {
+        "persistent": false,
+        "size_gb": 20
+      },
+      "networking": {
+        "load_balancer": true
+      },
+      "security": {
+        "https": true,
+        "authentication": true
+      },
+      "monitoring": {
+        "metrics": true,
+        "logging": true
+      },
+      "estimated_cost": 150.0,
+      "compliance_requirements": [
+        "SOC2"
+      ]
+    },
+    "security_analysis": {
+      "vulnerabilities": []
+    },
+    "complexity_score": 0.6,
+    "estimated_resources": {
+      "instances": 2,
+      "storage_gb": 20
+    }
+  },
+  "infrastructure_requirements": null,
+  "security_assessment": null,
+  "infrastructure_plan": null,
+  "deployment_strategy": null,
+  "optimization_recommendations": [],
+  "deployment_result": null,
+  "monitoring_data": null,
+  "decision_history": [],
+  "current_decisions": {},
+  "confidence_scores": {},
+  "errors": [
+    "Requirements assessment failed: An error occurred (UnauthorizedOperation) when calling the DescribeAvailabilityZones operation: You are not authorized to perform this operation. User: arn:aws:iam::427793686436:user/user-souvik-mukherjee-deveops-manager is not authorized to perform: ec2:DescribeAvailabilityZones because no identity-based policy allows the ec2:DescribeAvailabilityZones action"
+  ],
+  "warnings": [],
+  "rollback_required": false,
+  "progress_percentage": 20.0,
+  "completed_steps": [
+    "repository_analysis"
+  ],
+  "pending_steps": [
+    "infrastructure_planning",
+    "security_assessment",
+    "resource_optimization",
+    "deployment"
+  ],
+  "created_resources": [],
+  "resource_dependencies": {},
+  "cleanup_required": [],
+  "estimated_monthly_cost": 0.0,
+  "actual_costs": {},
+  "budget_alerts": [],
+  "compliance_status": {},
+  "security_violations": [],
+  "audit_trail": [
+    {
+      "timestamp": "2025-07-13 15:11:26.557354",
+      "action": "session_initialized",
+      "details": {
+        "session_id": "b183ee4a-e297-472f-b88a-9645393cc7a4",
+        "repository_url": "https://github.com/spring-projects/spring-petclinic",
+        "target_environment": "dev"
+      }
+    },
+    {
+      "timestamp": "2025-07-13 15:11:26.559053",
+      "action": "phase_transition",
+      "details": {
+        "previous_phase": "DeploymentPhase.INITIALIZATION",
+        "new_phase": "DeploymentPhase.REPOSITORY_ANALYSIS"
+      }
+    },
+    {
+      "timestamp": "2025-07-13 15:11:27.039705",
+      "action": "phase_transition",
+      "details": {
+        "previous_phase": "DeploymentPhase.REPOSITORY_ANALYSIS",
+        "new_phase": "DeploymentPhase.INFRASTRUCTURE_PLANNING"
+      }
+    },
+    {
+      "timestamp": "2025-07-13 15:11:27.247932",
+      "action": "error_occurred",
+      "details": {
+        "error_message": "Requirements assessment failed: An error occurred (UnauthorizedOperation) when calling the DescribeAvailabilityZones operation: You are not authorized to perform this operation. User: arn:aws:iam::427793686436:user/user-souvik-mukherjee-deveops-manager is not authorized to perform: ec2:DescribeAvailabilityZones because no identity-based policy allows the ec2:DescribeAvailabilityZones action",
+        "error_details": {}
+      }
+    },
+    {
+      "timestamp": "2025-07-13 15:11:27.249807",
+      "action": "phase_transition",
+      "details": {
+        "previous_phase": "DeploymentPhase.REPOSITORY_ANALYSIS",
+        "new_phase": "DeploymentPhase.FAILED"
+      }
+    }
+  ]
+}

@@ -16,7 +16,10 @@ from .repository_analyzer import RepositoryAnalyzer
 from .infrastructure_planner import InfrastructurePlanner
 from .security_manager import SecurityManager
 from .kubernetes_manager import KubernetesManager
-from .visualization import InfrastructureVisualizer
+try:
+    from .visualization import InfrastructureVisualizer
+except ImportError:
+    InfrastructureVisualizer = None
 from .iac_generator import IaCGenerator
 
 __all__ = [

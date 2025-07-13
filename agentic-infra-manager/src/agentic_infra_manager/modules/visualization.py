@@ -23,7 +23,11 @@ from pathlib import Path
 
 from diagrams import Diagram, Edge, Cluster
 from diagrams.aws.compute import EKS, EC2, Lambda, ECS
-from diagrams.aws.database import RDS, DynamoDB, ElastiCache
+try:
+    from diagrams.aws.database import RDS, DynamoDB, ElastiCache
+except ImportError:
+    from diagrams.aws.database import RDS, ElastiCache
+    DynamoDB = None
 from diagrams.aws.network import VPC, PrivateSubnet, PublicSubnet, NATGateway, InternetGateway, ALB, CloudFront
 from diagrams.aws.storage import S3, EBS, EFS
 from diagrams.aws.security import IAM, SecretsManager, KMS
